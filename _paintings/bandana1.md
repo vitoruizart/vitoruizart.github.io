@@ -1,8 +1,8 @@
 ---
-title: 'Mujer Pañuelo 1'
-subtitle: 'Acrylic on canvas 30x40cm'
+title: 'Retrato con Pañuelo'
+subtitle: 'Acrylic on canvas 40x40cm'
 date: 2023-09-01 00:00:00
-description: Acrylic on canvas 30x40cm
+description: Acrylic on canvas 40x40cm
 featured_image: '/images/c/bandana1/1.jpg'
 ---
 

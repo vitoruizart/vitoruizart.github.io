@@ -1,10 +1,26 @@
 ---
 title: Contact
-subtitle: Board comes with a built-in contact form, that's free and easy to set up.
-description: Board is a stylish full-width masonry grid theme.
-featured_image: /images/demo/about.jpg
+subtitle: How to Contact VitoRuiz
+description: Contact Information
+featured_image: /images/c/mflorero/thumb.jpg
 ---
 
-{% include contact-form.html %}
+# Contact Information
 
-We've made a contact form that you can use with [Formspree](https://formspree.io/create/jekyllthemes) to handle up to 50 submissions per month for free. You could also easily switch out the end-point to use another contact form service.
+If you like any of my paintings, you can contact me:
+
+* Instagram: <a href="https://www.instagram.com/vitoruizart/" target="_blank">`@VitoRuizArt`</a>
+* Email: victoriaplun AT gmail.com
+
+
+<div class="gallery" data-columns="1">
+	<img src="/images/c/mflorero/1.jpg">
+	<img src="/images/c/mflorero/2.jpg">
+	<img src="/images/c/mflorero/3.jpg">
+	<img src="/images/c/mflorero/4.jpg">
+    <img src="/images/c/sombrero/1.jpg">
+	<img src="/images/c/earring1/1.jpg">
+    <img src="/images/c/earring2/1.jpg">
+    <img src="/images/c/bandana1/1.jpg">
+    <img src="/images/c/stripes1/1.jpg">
+</div>
