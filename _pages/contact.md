@@ -1,5 +1,5 @@
 ---
-title: Contact Information
+title: Contact ✉️
 subtitle: If you like any of my paintings, you can contact me
 description: Contact Information
 featured_image: /images/c/mflorero/thumb.jpg
