@@ -10,9 +10,9 @@ collections:
   posts:
     output: true
     permalink: /blog/:slug
-  projects:
+  paintings:
     output: true
-    permalink: /project/:slug
+    permalink: /painting/:slug
 
 defaults:
   -
@@ -35,9 +35,9 @@ defaults:
   -
     scope:
       path: ""
-      type: "projects"
+      type: "paintings"
     values:
-      layout: "project"
+      layout: "painting"
 
 markdown: kramdown
 

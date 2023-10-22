@@ -9,20 +9,20 @@ featured_image: /images/banner.jpg
 
 	<div class="content-wrap listing-wrap">
 
-		{% for project in site.projects reversed %}
+		{% for painting in site.paintings reversed %}
 
 		<div class="listing-item">
 
-			<a class="listing-item__link" href="{{ project.url | relative_url }}">
+			<a class="listing-item__link" href="{{ painting.url | relative_url }}">
 
 				<div class="listing-item__image">
-					<img src="{{ project.featured_image | relative_url }}" alt="{{ project.title }}">
+					<img src="{{ painting.featured_image | relative_url }}" alt="{{ painging.title }}">
 				</div>
 
 				<div class="listing-item__content listing-item__content--{{ site.data.settings.grid_settings.content_alignment }}">
 					<div class="listing-item__info">
-						<h2 class="listing-item__title">{{ project.title }}</h2>
-						<p class="listing-item__subtitle">{{ project.subtitle }}</p>
+						<h2 class="listing-item__title">{{ painting.title }}</h2>
+						<p class="listing-item__subtitle">{{ painting.subtitle }}</p>
 					</div>
 				</div>
 
