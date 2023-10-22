@@ -1,6 +1,6 @@
 basic_settings:
-  site_title: Board
-  favicon_image: /images/favicon.png
+  site_title: VitoRuiz.art
+  favicon_image: /images/favicon.ico
 
 header_settings:
   logo_image: 
@@ -18,7 +18,7 @@ menu_settings:
       url: '/contact'
 
 footer_settings:
-  footer_tagline: Board – a stylish full-width masonry grid Jekyll theme
+  footer_tagline: VitoRuiz.Art – Original Paintings.
 
 grid_settings:
   overlay_opacity: 0.8
@@ -34,7 +34,7 @@ contact_settings:
 social_settings:
   facebook_url: ''
   twitter_url: ''
-  instagram_url: ''
+  instagram_url: 'https://www.instagram.com/vitoruizart/'
   snapchat_url: ''
   youtube_url: ''
   google-plus_url: ''
