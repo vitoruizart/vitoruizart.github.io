@@ -1,6 +1,7 @@
 basic_settings:
-  site_title: VitoRuiz.art - Coming soon...
+  site_title: VitoRuiz.art 
   favicon_image: /images/favicon.ico
+  author: Victoria Ruiz
 
 header_settings:
   logo_image: 
