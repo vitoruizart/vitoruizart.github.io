@@ -1,8 +1,8 @@
 ---
-title: 'Colección Mujer Florero'
-subtitle: 'Acrílico sobre lienzo 30x40cm'
+title: '"Mujer Florero" Collection'
+subtitle: 'Acrylic on canvas 30x40cm'
 date: 2023-09-01 00:00:00
-description: Acrílico sobre lienzo 30x40cm
+description: Acrylic on canvas 30x40cm
 featured_image: '/images/c/mflorero/thumb.jpg'
 ---
 
