@@ -1,13 +1,9 @@
 ---
-title: Contact
-subtitle: How to Contact VitoRuiz
+title: Contact Information
+subtitle: If you like any of my paintings, you can contact me
 description: Contact Information
 featured_image: /images/c/mflorero/thumb.jpg
 ---
-
-# Contact Information
-
-If you like any of my paintings, you can contact me:
 
 * Instagram: <a href="https://www.instagram.com/vitoruizart/" target="_blank">`@VitoRuizArt`</a>
 * Email: victoriaplun AT gmail.com
