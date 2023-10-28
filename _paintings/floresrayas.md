@@ -1,6 +1,6 @@
 ---
 title: 'Flores y Rayas'
-subtitle: 'Acrylic on canvas 40x50cm'
+subtitle: 'Acrylic on canvas 40x50cm - SOLD'
 date: 2023-09-01 00:00:00
 description: Acrylic on canvas 40x50cm - SOLD
 featured_image: '/images/c/floresrayas/1.jpg'

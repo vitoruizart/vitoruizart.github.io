@@ -1,6 +1,6 @@
 ---
 title: 'Muchacha con lazo'
-subtitle: 'Acrylic on canvas 40x50cm'
+subtitle: 'Acrylic on canvas 40x50cm - AVAILABLE'
 date: 2023-09-01 00:00:00
 description: Acrylic on canvas 40x50cm - AVAILABLE
 featured_image: '/images/c/muchachalazo/1.jpg'
