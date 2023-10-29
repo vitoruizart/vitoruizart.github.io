@@ -1,6 +1,6 @@
 ---
 title: 'Mujer Pendientes 2'
-subtitle: 'Acrylic on canvas 30x40cm'
+subtitle: 'Acrylic on canvas 30x40cm - SOLD'
 date: 2023-09-01 00:00:00
 description: Acrylic on canvas 30x40cm
 featured_image: '/images/c/earring2/1.jpg'
