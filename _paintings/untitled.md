@@ -8,9 +8,10 @@ featured_image: '/images/c/untitled/1.jpg'
 
 <div class="gallery" data-columns="1">
 	<img src="/images/c/untitled/1.jpg">
-	<img src="/images/c/untitled/2.png">
+	<img src="/images/c/untitled/2.jpg">
 	<img src="/images/c/untitled/3.jpg">
 	<img src="/images/c/untitled/4.jpg">
 
 </div>
+
 
