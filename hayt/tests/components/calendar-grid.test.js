@@ -66,15 +66,14 @@ describe('renderCalendarGrid', () => {
     expect(cell.innerHTML).toContain('<img');
   });
 
-  it('averages mood values', () => {
-    // mood [2, 4] → avg 3 → mood 3 face (neutral)
+  it('averages mood values and sets mood background', () => {
+    // mood [2, 4] → avg 3 → mood 3 background
     const moodsByDate = new Map([
       ['2025-03-10', [{ mood: 2 }, { mood: 4 }]],
     ]);
     const el = renderCalendarGrid(2025, 2, moodsByDate, () => {});
     const cell = el.querySelector('[data-date="2025-03-10"]');
-    // Mood 3 color is #9B59B6
-    expect(cell.getAttribute('style')).toContain('#9B59B6');
+    expect(cell.getAttribute('style')).toContain('--mood-bg');
   });
 
   it('shows count badge for multiple entries', () => {

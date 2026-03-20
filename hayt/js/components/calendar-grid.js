@@ -1,7 +1,15 @@
 // Month calendar grid renderer
 import { getDaysInMonth, getFirstDayOfWeek, toDateStr } from '../lib/date-utils.js';
-import { getMood } from '../lib/constants.js';
 import { moodFaceSvgSmall } from './mood-faces.js';
+
+// Greyish blue (worst) → pinkish red (best)
+const MOOD_BG = {
+  1: 'rgba(120,135,155,0.30)',
+  2: 'rgba(140,130,160,0.30)',
+  3: 'rgba(160,120,155,0.30)',
+  4: 'rgba(185,105,130,0.30)',
+  5: 'rgba(210,90,110,0.30)',
+};
 
 const DAY_NAMES = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
@@ -33,13 +41,12 @@ export function renderCalendarGrid(year, month, moodsByDate, onDayClick) {
       const sum = entries.reduce((acc, e) => acc + e.mood, 0);
       moodValue = Math.round(sum / entries.length);
     }
-    const moodInfo = moodValue !== null ? getMood(moodValue) : null;
-    const dotColor = moodInfo ? moodInfo.color : 'transparent';
     const face = moodValue !== null ? moodFaceSvgSmall(moodValue, 24) : '';
     const countBadge = entries.length > 1 ? `<span class="cal-count">${entries.length}</span>` : '';
+    const bgStyle = moodValue !== null ? `--mood-bg:${MOOD_BG[moodValue]}` : '';
 
     html += `<button class="cal-cell${isToday ? ' cal-today' : ''}${moodValue !== null ? ' cal-has-mood' : ''}"
-      data-date="${dateStr}" style="--mood-color:${dotColor}">
+      data-date="${dateStr}" style="${bgStyle}">
       <span class="cal-day-num">${d}</span>
       ${face ? `<span class="cal-face">${face}</span>` : ''}
       ${countBadge}

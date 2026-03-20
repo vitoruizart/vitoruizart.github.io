@@ -276,7 +276,7 @@ body {
 }
 
 .cal-has-mood {
-  background: color-mix(in srgb, var(--mood-color) 12%, var(--bg-card));
+  background: var(--mood-bg, var(--bg-card));
 }
 
 .cal-day-num {
