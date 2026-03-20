@@ -205,7 +205,9 @@ async function editMood(container, dateStr, entryId, entry, newValue) {
   const { syncNow } = window._haytSync ?? {};
   if (syncNow) syncNow();
   toast('Actualizado', 'success', 1500);
-  render(container, dateStr);
+
+  // Show note step instead of re-rendering immediately
+  showNoteStep(container, dateStr, updated);
 }
 
 async function addMoodForDay(container, dateStr, value) {
@@ -239,5 +241,63 @@ async function addMoodForDay(container, dateStr, value) {
   const { syncNow: syncFn } = window._haytSync ?? {};
   if (syncFn) syncFn();
   toast('Guardado', 'success', 1500);
-  render(container, dateStr);
+
+  // Show note step instead of re-rendering immediately
+  showNoteStep(container, dateStr, mood);
+}
+
+function showNoteStep(container, dateStr, savedMood) {
+  // Replace the picker area with success + note option
+  const picker = container.querySelector('#mood-picker');
+  const editPicker = container.querySelector('.edit-picker-inline');
+  if (editPicker) editPicker.remove();
+
+  picker.classList.remove('hidden');
+  picker.innerHTML = `
+    <p class="mood-saved-msg">Estado de ánimo registrado</p>
+    <div class="mood-post-actions">
+      <button class="btn-primary" id="post-add-note">Añadir nota</button>
+    </div>`;
+
+  picker.querySelector('#post-add-note').addEventListener('click', () => {
+    const actions = picker.querySelector('.mood-post-actions');
+    actions.innerHTML = `
+      <div class="note-section">
+        <textarea class="field-input note-input" id="day-mood-note"
+          placeholder="¿Qué está pasando?" rows="3" maxlength="500"></textarea>
+        <button class="btn-primary note-save-btn" id="day-note-save">Guardar</button>
+      </div>`;
+
+    const textarea = actions.querySelector('#day-mood-note');
+    textarea.focus();
+
+    actions.querySelector('#day-note-save').addEventListener('click', async () => {
+      const note = textarea.value.trim();
+      if (!note) return;
+
+      const updated = { ...savedMood, note };
+      try {
+        await putMood(updated);
+        await addChangeEntry({
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+          entityType: 'mood',
+          entityId: savedMood.id,
+          operation: 'upsert',
+          data: { ...updated },
+          deviceId: getDeviceId(),
+        });
+      } catch (err) {
+        console.error('Failed to save note:', err);
+        toast('Error al guardar nota', 'error');
+        return;
+      }
+      state.set('syncStatus', 'pending');
+      state.set('moodsUpdated', Date.now());
+      const { syncNow } = window._haytSync ?? {};
+      if (syncNow) syncNow();
+      toast('Nota guardada', 'success', 1500);
+      render(container, dateStr);
+    });
+  });
 }

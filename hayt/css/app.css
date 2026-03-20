@@ -227,6 +227,25 @@ body {
   padding: 10px 32px;
 }
 
+/* Post-save success + actions */
+.mood-saved-msg {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2ECC71;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+.mood-post-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 400px;
+}
+.mood-post-actions .note-section {
+  margin-top: 0;
+}
+
 .mood-grid-small {
   gap: 6px;
 }

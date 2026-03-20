@@ -151,4 +151,104 @@ describe('day-detail screen', () => {
     expect(note.textContent).toBe('<script>alert("xss")</script>');
     expect(note.innerHTML).not.toContain('<script>');
   });
+
+  it('shows "Añadir nota" button after adding a mood', async () => {
+    mockGetMoodsByDate.mockResolvedValue([]);
+    await render(container, '2025-03-15');
+
+    // Click add button
+    container.querySelector('#day-add').click();
+
+    // Select a mood
+    const moodBtn = container.querySelector('#mood-picker .mood-btn[data-mood="4"]');
+    moodBtn.click();
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('#post-add-note')).toBeTruthy();
+    });
+
+    expect(container.querySelector('.mood-saved-msg').textContent).toContain('Estado de ánimo registrado');
+  });
+
+  it('typing a note and saving updates the mood record after add', async () => {
+    mockGetMoodsByDate.mockResolvedValue([]);
+    await render(container, '2025-03-15');
+
+    // Click add button
+    container.querySelector('#day-add').click();
+
+    // Select a mood
+    container.querySelector('#mood-picker .mood-btn[data-mood="4"]').click();
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('#post-add-note')).toBeTruthy();
+    });
+
+    // Click "Añadir nota"
+    container.querySelector('#post-add-note').click();
+
+    const textarea = container.querySelector('#day-mood-note');
+    expect(textarea).toBeTruthy();
+
+    textarea.value = 'Great day at work';
+    // Mock getMoodsByDate for re-render after note save
+    mockGetMoodsByDate.mockResolvedValue([]);
+    container.querySelector('#day-note-save').click();
+
+    await vi.waitFor(() => {
+      expect(mockToast).toHaveBeenCalledWith('Nota guardada', 'success', 1500);
+    });
+
+    expect(mockPutMood).toHaveBeenCalledTimes(2);
+    const updatedMood = mockPutMood.mock.calls[1][0];
+    expect(updatedMood.note).toBe('Great day at work');
+  });
+
+  it('shows "Añadir nota" button after editing a mood', async () => {
+    mockGetMoodsByDate.mockResolvedValue([{ ...SAMPLE_MOODS[0] }]);
+    await render(container, '2025-03-15');
+
+    // Click edit to show picker
+    container.querySelector('.entry-edit').click();
+
+    // Select a new mood value
+    container.querySelector('.edit-picker-inline .mood-btn[data-mood="5"]').click();
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('#post-add-note')).toBeTruthy();
+    });
+
+    expect(container.querySelector('.mood-saved-msg').textContent).toContain('Estado de ánimo registrado');
+  });
+
+  it('typing a note and saving updates the mood record after edit', async () => {
+    mockGetMoodsByDate.mockResolvedValue([{ ...SAMPLE_MOODS[0] }]);
+    await render(container, '2025-03-15');
+
+    // Click edit to show picker
+    container.querySelector('.entry-edit').click();
+
+    // Select a new mood
+    container.querySelector('.edit-picker-inline .mood-btn[data-mood="5"]').click();
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('#post-add-note')).toBeTruthy();
+    });
+
+    // Click "Añadir nota"
+    container.querySelector('#post-add-note').click();
+
+    const textarea = container.querySelector('#day-mood-note');
+    textarea.value = 'Mood improved after lunch';
+    container.querySelector('#day-note-save').click();
+
+    await vi.waitFor(() => {
+      // putMood called twice: once for edit, once for note
+      expect(mockPutMood).toHaveBeenCalledTimes(2);
+    });
+
+    const updatedMood = mockPutMood.mock.calls[1][0];
+    expect(updatedMood.note).toBe('Mood improved after lunch');
+    expect(updatedMood.mood).toBe(5);
+  });
 });

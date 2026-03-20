@@ -13,8 +13,6 @@ export async function shouldShowPrompt() {
   return recent.length === 0;
 }
 
-let autoSaveTimer = null;
-
 export function render(container) {
   container.innerHTML = `
     <div class="mood-prompt">
@@ -27,60 +25,34 @@ export function render(container) {
           </button>
         `).join('')}
       </div>
-      <div class="note-section hidden" id="note-section">
-        <textarea class="field-input note-input" id="mood-note"
-          placeholder="¿Qué está pasando?" rows="3" maxlength="500"></textarea>
-        <button class="btn-primary note-save-btn" id="note-save">Guardar</button>
-      </div>
+      <div id="mood-post-save"></div>
     </div>`;
 
   container.querySelectorAll('.mood-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const value = parseInt(btn.dataset.mood, 10);
-      showNoteField(container, value);
+      handleMoodSelected(container, value);
     });
   });
 }
 
-function showNoteField(container, moodValue) {
-  // Highlight selected mood button
+async function handleMoodSelected(container, moodValue) {
+  // Disable mood buttons immediately
   container.querySelectorAll('.mood-btn').forEach(b => {
     b.style.opacity = parseInt(b.dataset.mood, 10) === moodValue ? '1' : '0.4';
     b.style.pointerEvents = 'none';
   });
 
-  const noteSection = container.querySelector('#note-section');
-  noteSection.classList.remove('hidden');
-  noteSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-  // Auto-save after 2s if user doesn't interact with the note field
-  autoSaveTimer = setTimeout(() => saveMood(moodValue, ''), 2000);
-
-  const textarea = container.querySelector('#mood-note');
-  textarea.addEventListener('input', () => {
-    if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
-  });
-
-  container.querySelector('#note-save').addEventListener('click', () => {
-    if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
-    saveMood(moodValue, textarea.value.trim());
-  });
-}
-
-async function saveMood(value, note) {
-  // Prevent double-save
-  if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
-
+  // Save mood immediately (no note)
   const now = new Date();
   const mood = {
     id: crypto.randomUUID(),
     timestamp: now.getTime(),
     date: toDateStr(now),
     time: toTimeStr(now),
-    mood: value,
+    mood: moodValue,
     deviceId: getDeviceId(),
   };
-  if (note) mood.note = note;
 
   try {
     await putMood(mood);
@@ -96,16 +68,79 @@ async function saveMood(value, note) {
   } catch (err) {
     console.error('Failed to save mood:', err);
     toast('Error al guardar', 'error');
+    // Re-enable buttons
+    container.querySelectorAll('.mood-btn').forEach(b => {
+      b.style.opacity = '1';
+      b.style.pointerEvents = '';
+    });
     return;
   }
 
   state.set('syncStatus', 'pending');
-  toast('Guardado', 'success', 1500);
-
-  // Trigger sync
   const { syncNow } = window._haytSync ?? {};
   if (syncNow) syncNow();
 
-  // Navigate to calendar
-  location.hash = '#calendar';
+  // Show post-save UI
+  showPostSave(container, mood);
+}
+
+function showPostSave(container, savedMood) {
+  const area = container.querySelector('#mood-post-save');
+  area.innerHTML = `
+    <p class="mood-saved-msg">Estado de ánimo registrado</p>
+    <div class="mood-post-actions">
+      <button class="btn-secondary" id="post-go-calendar">Ir al Calendario</button>
+      <button class="btn-primary" id="post-add-note">Añadir nota</button>
+    </div>`;
+
+  area.querySelector('#post-go-calendar').addEventListener('click', () => {
+    location.hash = '#calendar';
+  });
+
+  area.querySelector('#post-add-note').addEventListener('click', () => {
+    showNoteField(area, savedMood);
+  });
+}
+
+function showNoteField(area, savedMood) {
+  // Replace action buttons with textarea + save
+  const actions = area.querySelector('.mood-post-actions');
+  actions.innerHTML = `
+    <div class="note-section">
+      <textarea class="field-input note-input" id="mood-note"
+        placeholder="¿Qué está pasando?" rows="3" maxlength="500"></textarea>
+      <button class="btn-primary note-save-btn" id="note-save">Guardar</button>
+    </div>`;
+
+  const textarea = actions.querySelector('#mood-note');
+  textarea.focus();
+
+  actions.querySelector('#note-save').addEventListener('click', async () => {
+    const note = textarea.value.trim();
+    if (!note) return;
+
+    const updated = { ...savedMood, note };
+    try {
+      await putMood(updated);
+      await addChangeEntry({
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        entityType: 'mood',
+        entityId: savedMood.id,
+        operation: 'upsert',
+        data: { ...updated },
+        deviceId: getDeviceId(),
+      });
+    } catch (err) {
+      console.error('Failed to save note:', err);
+      toast('Error al guardar nota', 'error');
+      return;
+    }
+
+    state.set('syncStatus', 'pending');
+    const { syncNow } = window._haytSync ?? {};
+    if (syncNow) syncNow();
+    toast('Nota guardada', 'success', 1500);
+    location.hash = '#calendar';
+  });
 }
