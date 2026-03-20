@@ -58,17 +58,34 @@ function showUpdateOverlay() {
     </div>`;
 
   overlay.querySelector('.update-btn').addEventListener('click', async () => {
-    // Delete all caches
+    // 1. Delete all SW caches
     const keys = await caches.keys();
     await Promise.all(keys.map(k => caches.delete(k)));
 
-    // Tell SW to update
-    const reg = await navigator.serviceWorker.getRegistration();
-    if (reg) await reg.update();
+    // 2. Unregister current SW so stale HTTP-cached files don't get re-cached
+    const oldReg = await navigator.serviceWorker.getRegistration();
+    if (oldReg) await oldReg.unregister();
 
-    // Fallback: in standalone PWA on some platforms, controllerchange may not
-    // fire, so force reload after a short delay to ensure skipWaiting completes.
-    setTimeout(() => location.reload(), 2000);
+    // 3. Re-register fresh SW — browser always fetches sw.js from network
+    //    The install handler uses cache:'reload' to bypass HTTP cache
+    try {
+      const newReg = await navigator.serviceWorker.register('sw.js');
+      const sw = newReg.installing || newReg.waiting;
+      if (sw && sw.state !== 'activated') {
+        await new Promise((resolve) => {
+          sw.addEventListener('statechange', function handler() {
+            if (sw.state === 'activated') {
+              sw.removeEventListener('statechange', handler);
+              resolve();
+            }
+          });
+          setTimeout(resolve, 5000); // fallback if activation stalls
+        });
+      }
+    } catch { /* SW not supported or registration failed — reload anyway */ }
+
+    // 4. Reload — new SW with fresh cache serves the request
+    location.reload();
   });
 
   document.body.appendChild(overlay);

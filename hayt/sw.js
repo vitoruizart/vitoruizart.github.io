@@ -19,6 +19,7 @@ const STATIC_ASSETS = [
   '/hayt/js/components/calendar-grid.js',
   '/hayt/js/components/trend-chart.js',
   '/hayt/js/components/toast.js',
+  '/hayt/js/components/mood-banner.js',
   '/hayt/js/components/nav.js',
   '/hayt/js/screens/mood-prompt.js',
   '/hayt/js/screens/calendar.js',
@@ -31,7 +32,13 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)),
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        STATIC_ASSETS.map((url) =>
+          fetch(url, { cache: 'reload' }).then((res) => cache.put(url, res)),
+        ),
+      ),
+    ),
   );
   self.skipWaiting();
 });

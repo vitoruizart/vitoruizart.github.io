@@ -10,8 +10,16 @@ vi.stubGlobal('caches', {
   keys: () => Promise.resolve([]),
   delete: () => Promise.resolve(true),
 });
+const swActivated = {
+  state: 'activated',
+  addEventListener: () => {},
+  removeEventListener: () => {},
+};
 vi.stubGlobal('navigator', {
-  serviceWorker: { getRegistration: () => Promise.resolve(null) },
+  serviceWorker: {
+    getRegistration: () => Promise.resolve(null),
+    register: () => Promise.resolve({ installing: null, waiting: null, active: swActivated }),
+  },
 });
 
 let fetchMock;
@@ -91,5 +99,43 @@ describe('checkForUpdate', () => {
     const btn = document.querySelector('.update-btn');
     expect(btn).not.toBeNull();
     expect(btn.textContent).toContain('Actualizar');
+  });
+
+  it('update button unregisters old SW and re-registers fresh one', async () => {
+    const unregisterFn = vi.fn(() => Promise.resolve());
+    const registerFn = vi.fn(() =>
+      Promise.resolve({ installing: null, waiting: null, active: swActivated }),
+    );
+    vi.stubGlobal('navigator', {
+      serviceWorker: {
+        getRegistration: () => Promise.resolve({ unregister: unregisterFn }),
+        register: registerFn,
+      },
+    });
+    vi.stubGlobal('caches', {
+      keys: () => Promise.resolve(['hayt-v3']),
+      delete: vi.fn(() => Promise.resolve(true)),
+    });
+    // Prevent actual reload
+    const reloadFn = vi.fn();
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, reload: reloadFn },
+      writable: true,
+      configurable: true,
+    });
+
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ version: 'NEW_VERSION' }),
+    });
+    await checkForUpdate();
+    const btn = document.querySelector('.update-btn');
+    await btn.click();
+    // Allow microtasks to settle
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(caches.delete).toHaveBeenCalledWith('hayt-v3');
+    expect(unregisterFn).toHaveBeenCalled();
+    expect(registerFn).toHaveBeenCalledWith('sw.js');
   });
 });
