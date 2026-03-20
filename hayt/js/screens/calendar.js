@@ -19,8 +19,12 @@ export async function render(container) {
 
   await renderView(container);
 
-  // Re-render on mood changes
-  cleanupListener = state.on('moodsUpdated', () => renderView(container));
+  // Re-render on mood changes — only if calendar is still displayed
+  cleanupListener = state.on('moodsUpdated', () => {
+    if (container.querySelector('.calendar-view')) {
+      renderView(container);
+    }
+  });
 }
 
 async function renderView(container) {
