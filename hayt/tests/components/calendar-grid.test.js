@@ -94,6 +94,24 @@ describe('renderCalendarGrid', () => {
     expect(onClick).toHaveBeenCalledWith('2025-03-10');
   });
 
+  it('shows note badge when an entry has a note', () => {
+    const moodsByDate = new Map([
+      ['2025-03-10', [{ mood: 4, note: 'Great day' }]],
+    ]);
+    const el = renderCalendarGrid(2025, 2, moodsByDate, () => {});
+    const badge = el.querySelector('[data-date="2025-03-10"] .cal-note');
+    expect(badge).not.toBeNull();
+  });
+
+  it('does not show note badge when no entries have notes', () => {
+    const moodsByDate = new Map([
+      ['2025-03-10', [{ mood: 4 }]],
+    ]);
+    const el = renderCalendarGrid(2025, 2, moodsByDate, () => {});
+    const badge = el.querySelector('[data-date="2025-03-10"] .cal-note');
+    expect(badge).toBeNull();
+  });
+
   it('does not show count badge for single entry', () => {
     const moodsByDate = new Map([
       ['2025-03-10', [{ mood: 5 }]],

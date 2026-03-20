@@ -124,7 +124,7 @@ export async function render(container, dateStr) {
 function renderEntry(entry) {
   const mood = getMoodDef(entry.mood);
   const noteHtml = entry.note
-    ? `<span class="entry-note">${escapeHtml(entry.note)}</span>`
+    ? `<span class="entry-note"><svg class="entry-note-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>${escapeHtml(entry.note)}</span>`
     : '';
   return `<div class="day-entry" style="border-left-color:${mood.color}">
     <div class="entry-face">${moodFaceSvg(entry.mood, 40)}</div>

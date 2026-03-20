@@ -46,12 +46,15 @@ export function renderCalendarGrid(year, month, moodsByDate, onDayClick) {
     }
     const face = moodValue !== null ? moodFaceSvgSmall(moodValue, 24) : '';
     const countBadge = entries.length > 1 ? `<span class="cal-count">${entries.length}</span>` : '';
+    const hasNote = entries.some(e => e.note);
+    const noteBadge = hasNote ? '<span class="cal-note" aria-label="con nota"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor" stroke="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>' : '';
     const bgStyle = moodValue !== null ? `--mood-bg:${MOOD_BG[moodValue]}` : '';
 
     // ARIA label: "15 de marzo, ánimo 4 (Contenta)"
     let ariaLabel = `${d} de ${MONTH_NAMES[month]}`;
     if (moodValue !== null) {
       ariaLabel += `, ánimo ${moodValue} (${getMood(moodValue).label})`;
+      if (hasNote) ariaLabel += ', con nota';
     }
 
     html += `<button class="cal-cell${isToday ? ' cal-today' : ''}${moodValue !== null ? ' cal-has-mood' : ''}"
@@ -59,6 +62,7 @@ export function renderCalendarGrid(year, month, moodsByDate, onDayClick) {
       <span class="cal-day-num">${d}</span>
       ${face ? `<span class="cal-face">${face}</span>` : ''}
       ${countBadge}
+      ${noteBadge}
     </button>`;
   }
 

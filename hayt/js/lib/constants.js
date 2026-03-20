@@ -20,7 +20,7 @@ export const POLL_INTERVAL_MS = 60_000;
 
 // Prompt
 export const DEFAULT_PROMPT_HOURS = 8;
-export const APP_VERSION = '20260320.2322';
+export const APP_VERSION = '20260320.2334';
 
 export function getPromptCooldownMs() {
   const stored = localStorage.getItem('hayt-prompt-hours');

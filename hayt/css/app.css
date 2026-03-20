@@ -373,6 +373,14 @@ body {
   justify-content: center;
 }
 
+.cal-note {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  color: rgba(255,255,255,0.7);
+  line-height: 0;
+}
+
 /* Trend chart */
 .trend-section {
   margin-top: 24px;
@@ -482,11 +490,22 @@ body {
   color: var(--text-muted);
 }
 .entry-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
   font-size: 13px;
-  color: var(--text-muted);
+  color: rgba(255,255,255,0.7);
   font-style: italic;
   line-height: 1.4;
+  margin-top: 4px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.entry-note-icon {
+  flex-shrink: 0;
   margin-top: 2px;
+  opacity: 0.6;
 }
 
 .entry-actions {
