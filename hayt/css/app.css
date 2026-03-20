@@ -189,6 +189,21 @@ body {
   font-size: 10px;
 }
 
+/* --- Mood Banner --- */
+.mood-banner {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.mood-banner-text {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text);
+}
+
 /* --- Calendar View --- */
 .calendar-view {
   padding: 16px;

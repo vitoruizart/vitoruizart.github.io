@@ -2,6 +2,7 @@
 import { formatMonthYear, toDateStr } from '../lib/date-utils.js';
 import { renderCalendarGrid } from '../components/calendar-grid.js';
 import { renderTrendChart } from '../components/trend-chart.js';
+import { renderMoodBanner } from '../components/mood-banner.js';
 import { getAllMoods } from '../db.js';
 import * as state from '../state.js';
 
@@ -43,6 +44,7 @@ async function renderView(container) {
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </div>
+      ${renderMoodBanner(allMoods)}
       <div id="cal-grid-container"></div>
       <div class="trend-section">
         <h3 class="trend-title">Últimos 30 días</h3>
