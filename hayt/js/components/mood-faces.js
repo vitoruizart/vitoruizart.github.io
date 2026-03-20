@@ -1,61 +1,62 @@
 // SVG kawaii mood faces for each mood level
 // Returns an SVG string for a given mood value (1-5)
-// Solid color-filled circles with expressive kawaii features (3-layer anime eyes, filled mouths)
+// Solid color-filled circles with white features inspired by justicon's Flaticon emoji pack
 
 import { getMood } from '../lib/constants.js';
 
 const FACE_PATHS = {
-  5: `<!-- Ecstatic ^_^ — closed arc eyes, filled grin, blush, sparkle -->
-    <path d="M28 44 Q35 34 42 44" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-    <path d="M58 44 Q65 34 72 44" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-    <circle cx="28" cy="54" r="8" fill="#fff" opacity="0.3"/>
-    <circle cx="72" cy="54" r="8" fill="#fff" opacity="0.3"/>
-    <path d="M30 60 Q50 80 70 60" stroke="#fff" stroke-width="3.5" fill="#fff" fill-opacity="0.35" stroke-linecap="round"/>
-    <path d="M78 28 L80 22 L82 28 L88 30 L82 32 L80 38 L78 32 L72 30 Z" fill="#fff" opacity="0.5"/>`,
+  5: `<!-- Feliz — heart eyes, open grin -->
+    <circle cx="75" cy="23" r="4" fill="#fff" opacity="0.4"/>
+    <circle cx="79" cy="19" r="2.5" fill="#fff" opacity="0.4"/>
+    <path d="M35 35 C35 27 23 27 23 37 C23 46 35 53 35 56 C35 53 47 46 47 37 C47 27 35 27 35 35 Z" fill="#fff"/>
+    <path d="M65 35 C65 27 53 27 53 37 C53 46 65 53 65 56 C65 53 77 46 77 37 C77 27 65 27 65 35 Z" fill="#fff"/>
+    <path d="M28 64 L72 64 Q70 82 50 84 Q30 82 28 64 Z" fill="#fff"/>
+    <path d="M32 68 L68 68 Q66 80 50 84 Q34 80 32 68 Z" fill="#000" opacity="0.15"/>`,
 
-  4: `<!-- Contenta — 3-layer anime eyes, U-smile, subtle blush -->
-    <circle cx="36" cy="42" r="10" fill="#fff"/>
-    <circle cx="36" cy="41" r="5.5" fill="#333"/>
-    <circle cx="34" cy="39" r="2.5" fill="#fff"/>
-    <circle cx="64" cy="42" r="10" fill="#fff"/>
-    <circle cx="64" cy="41" r="5.5" fill="#333"/>
-    <circle cx="62" cy="39" r="2.5" fill="#fff"/>
-    <circle cx="28" cy="54" r="6" fill="#fff" opacity="0.2"/>
-    <circle cx="72" cy="54" r="6" fill="#fff" opacity="0.2"/>
-    <path d="M34 62 Q50 76 66 62" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
+  4: `<!-- Contenta — squinted happy eyes, open grin with teeth -->
+    <circle cx="75" cy="23" r="4" fill="#fff" opacity="0.4"/>
+    <circle cx="79" cy="19" r="2.5" fill="#fff" opacity="0.4"/>
+    <path d="M26 42 Q33 30 40 42" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M60 42 Q67 30 74 42" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M28 62 L72 62 Q70 80 50 82 Q30 80 28 62 Z" fill="#fff"/>
+    <path d="M32 66 L68 66 Q66 78 50 82 Q34 78 32 66 Z" fill="#000" opacity="0.15"/>`,
 
-  3: `<!-- Neutral — 3-layer anime eyes, flat dash mouth -->
-    <circle cx="36" cy="42" r="10" fill="#fff"/>
-    <circle cx="36" cy="42" r="5.5" fill="#333"/>
-    <circle cx="34" cy="40" r="2.5" fill="#fff"/>
-    <circle cx="64" cy="42" r="10" fill="#fff"/>
-    <circle cx="64" cy="42" r="5.5" fill="#333"/>
-    <circle cx="62" cy="40" r="2.5" fill="#fff"/>
-    <line x1="38" y1="66" x2="62" y2="66" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>`,
+  3: `<!-- Neutral — round eyes with pupils, flat mouth -->
+    <circle cx="75" cy="23" r="4" fill="#fff" opacity="0.4"/>
+    <circle cx="79" cy="19" r="2.5" fill="#fff" opacity="0.4"/>
+    <circle cx="37" cy="44" r="10" fill="#fff"/>
+    <circle cx="37" cy="44" r="7" fill="#2d3436"/>
+    <circle cx="35" cy="42" r="2.5" fill="#fff"/>
+    <circle cx="63" cy="44" r="10" fill="#fff"/>
+    <circle cx="63" cy="44" r="7" fill="#2d3436"/>
+    <circle cx="65" cy="42" r="2.5" fill="#fff"/>
+    <line x1="40" y1="68" x2="60" y2="68" stroke="#fff" stroke-width="4" stroke-linecap="round"/>`,
 
-  2: `<!-- Triste — 3-layer anime eyes (looking down), eyebrows, frown, tear -->
-    <circle cx="36" cy="44" r="10" fill="#fff"/>
-    <circle cx="36" cy="47" r="5.5" fill="#333"/>
-    <circle cx="34" cy="45" r="2.5" fill="#fff"/>
-    <circle cx="64" cy="44" r="10" fill="#fff"/>
-    <circle cx="64" cy="47" r="5.5" fill="#333"/>
-    <circle cx="62" cy="45" r="2.5" fill="#fff"/>
-    <line x1="26" y1="30" x2="42" y2="34" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
-    <line x1="74" y1="30" x2="58" y2="34" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
-    <path d="M38 70 Q50 62 62 70" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-    <ellipse cx="46" cy="58" rx="3" ry="5" fill="#fff" opacity="0.4"/>`,
+  2: `<!-- Triste — big puppy eyes, sad brows, frown, tear -->
+    <circle cx="75" cy="23" r="4" fill="#fff" opacity="0.4"/>
+    <circle cx="79" cy="19" r="2.5" fill="#fff" opacity="0.4"/>
+    <circle cx="37" cy="46" r="12" fill="#fff"/>
+    <circle cx="37" cy="46" r="9" fill="#2d3436"/>
+    <circle cx="34" cy="43" r="3.5" fill="#fff"/>
+    <circle cx="38" cy="47" r="1.5" fill="#fff"/>
+    <circle cx="63" cy="46" r="12" fill="#fff"/>
+    <circle cx="63" cy="46" r="9" fill="#2d3436"/>
+    <circle cx="60" cy="43" r="3.5" fill="#fff"/>
+    <circle cx="64" cy="47" r="1.5" fill="#fff"/>
+    <path d="M24 34 Q34 28 44 36" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M76 34 Q66 28 56 36" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M42 72 Q50 66 58 72" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="73" cy="66" rx="4.5" ry="7" fill="#fff" opacity="0.5"/>`,
 
-  1: `<!-- Devastated >_< — chevron eyes, wobbly mouth, 6 tears, sweat drop -->
-    <path d="M28 34 L38 42 L28 50" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M72 34 L62 42 L72 50" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <ellipse cx="30" cy="56" rx="2.5" ry="4" fill="#fff" opacity="0.5"/>
-    <ellipse cx="28" cy="64" rx="2" ry="3.5" fill="#fff" opacity="0.4"/>
-    <ellipse cx="32" cy="70" rx="2" ry="3" fill="#fff" opacity="0.3"/>
-    <ellipse cx="70" cy="56" rx="2.5" ry="4" fill="#fff" opacity="0.5"/>
-    <ellipse cx="72" cy="64" rx="2" ry="3.5" fill="#fff" opacity="0.4"/>
-    <ellipse cx="68" cy="70" rx="2" ry="3" fill="#fff" opacity="0.3"/>
-    <path d="M78 24 Q80 18 82 24 Q82 28 80 30 Q78 28 78 24 Z" fill="#fff" opacity="0.5"/>
-    <path d="M30 72 Q38 66 46 72 Q54 78 62 72 Q66 68 70 70" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
+  1: `<!-- Hecha polvo — closed eyes, tear streams, open mouth -->
+    <circle cx="75" cy="23" r="4" fill="#fff" opacity="0.4"/>
+    <circle cx="79" cy="19" r="2.5" fill="#fff" opacity="0.4"/>
+    <rect x="22" y="38" width="12" height="42" rx="6" fill="#fff" opacity="0.3"/>
+    <rect x="66" y="38" width="12" height="42" rx="6" fill="#fff" opacity="0.3"/>
+    <path d="M26 42 Q33 30 40 42" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M60 42 Q67 30 74 42" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M34 68 L66 68 Q64 80 50 82 Q36 80 34 68 Z" fill="#fff"/>
+    <path d="M37 72 L63 72 Q61 80 50 82 Q39 80 37 72 Z" fill="#000" opacity="0.15"/>`,
 };
 
 export function moodFaceSvg(value, size = 100) {

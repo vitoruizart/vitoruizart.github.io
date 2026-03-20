@@ -64,22 +64,22 @@ describe('moodFaceSvg', () => {
     }
   });
 
-  it('mood 5 has happy arc eyes and blush marks', () => {
+  it('mood 5 has heart eyes and open grin', () => {
     const svg = moodFaceSvg(5);
-    // Arc eyes (path elements for ^_^ shape)
-    expect(svg).toContain('stroke="#fff"');
-    // Blush marks (low opacity circles)
-    expect(svg).toContain('opacity="0.3"');
+    // Heart-shaped eyes (filled cubic bezier paths)
+    expect(svg).toContain('C35 27');
+    // Open grin with dark mouth interior
+    expect(svg).toContain('fill="#000"');
   });
 
-  it('mood 1 has tear drops and chevron eyes', () => {
+  it('mood 1 has tear streams and closed arc eyes', () => {
     const svg = moodFaceSvg(1);
-    // Tear drops (ellipses with opacity)
-    expect(svg).toContain('ellipse');
-    expect(svg).toContain('opacity="0.4"');
-    // >_< chevron eyes (path elements with round joins)
+    // Wide tear streams (rounded rectangles)
+    expect(svg).toContain('<rect');
+    expect(svg).toContain('opacity="0.3"');
+    // Closed arc eyes (stroke paths)
     expect(svg).toContain('<path');
-    expect(svg).toContain('stroke-linejoin="round"');
+    expect(svg).toContain('stroke-linecap="round"');
   });
 });
 

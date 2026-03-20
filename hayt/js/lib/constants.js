@@ -4,7 +4,7 @@ export const MOODS = [
   { value: 4, label: 'Contenta',     color: '#2ECC71', bg: 'rgba(46,204,113,0.15)' },
   { value: 3, label: 'Ni fu ni fa',  color: '#9B59B6', bg: 'rgba(155,89,182,0.15)' },
   { value: 2, label: 'Triste',       color: '#5B9BD5', bg: 'rgba(91,155,213,0.15)' },
-  { value: 1, label: 'Hecha polvo',  color: '#888888', bg: 'rgba(136,136,136,0.15)' },
+  { value: 1, label: 'Hecha polvo',  color: '#4a4a4a', bg: 'rgba(74,74,74,0.15)' },
 ];
 
 export function getMood(value) {
@@ -20,7 +20,7 @@ export const POLL_INTERVAL_MS = 60_000;
 
 // Prompt
 export const DEFAULT_PROMPT_HOURS = 8;
-export const APP_VERSION = '20260320.1915';
+export const APP_VERSION = '20260320.1937';
 
 export function getPromptCooldownMs() {
   const stored = localStorage.getItem('hayt-prompt-hours');
