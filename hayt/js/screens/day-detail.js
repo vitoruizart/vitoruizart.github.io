@@ -86,6 +86,9 @@ export async function render(container, dateStr) {
   container.querySelector('#day-add').addEventListener('click', () => {
     const picker = container.querySelector('#mood-picker');
     picker.classList.toggle('hidden');
+    if (!picker.classList.contains('hidden')) {
+      picker.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
     picker.querySelectorAll('.mood-btn').forEach(mbtn => {
       mbtn.onclick = () => addMoodForDay(container, dateStr, parseInt(mbtn.dataset.mood, 10));
     });
@@ -114,6 +117,7 @@ function renderEntry(entry) {
 function showEditPicker(container, dateStr, entryId, entry) {
   const picker = container.querySelector('#mood-picker');
   picker.classList.remove('hidden');
+  picker.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   const title = picker.querySelector('.picker-title');
   title.textContent = 'Cambiar estado de ánimo';
   picker.querySelectorAll('.mood-btn').forEach(mbtn => {
