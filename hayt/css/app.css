@@ -138,25 +138,30 @@ body {
 
 .mood-grid {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
-  gap: 16px;
-  max-width: 400px;
+  gap: 8px;
 }
 
 .mood-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100px;
   background: var(--bg-card);
   border: 2px solid transparent;
   border-radius: var(--radius);
-  padding: 16px 12px;
+  padding: 10px 6px;
   cursor: pointer;
   color: var(--text);
   transition: transform 0.15s, border-color 0.15s;
-  min-width: 100px;
+}
+.mood-btn img {
+  width: 100%;
+  height: auto;
 }
 .mood-btn:active {
   transform: scale(0.93);
@@ -166,20 +171,24 @@ body {
 }
 
 .mood-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .mood-grid-small {
-  gap: 10px;
+  gap: 6px;
 }
 .mood-btn-small {
-  min-width: 72px;
-  padding: 10px 8px;
+  max-width: 72px;
+  padding: 8px 4px;
 }
 .mood-btn-small .mood-label {
-  font-size: 11px;
+  font-size: 10px;
 }
 
 /* --- Calendar View --- */
