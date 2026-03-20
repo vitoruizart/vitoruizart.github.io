@@ -1,5 +1,6 @@
 // Version check — polls version.json, foreground-aware with debounce
 // Shows blocking overlay when new version detected
+// APP_VERSION uses YYYYMMDD.HHMM UTC timestamps (stamped by post-commit hook)
 import { APP_VERSION } from './constants.js';
 
 const POLL_INTERVAL_MS = 30 * 60 * 1000;     // 30 minutes periodic
