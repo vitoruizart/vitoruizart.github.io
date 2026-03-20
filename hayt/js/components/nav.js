@@ -4,7 +4,10 @@ import * as state from '../state.js';
 export function renderNav(container) {
   container.innerHTML = `
     <nav class="top-nav">
-      <div class="nav-title">hayt</div>
+      <a class="nav-logo" href="#calendar" aria-label="Inicio">
+        <img src="icons/mood-5.png" class="nav-logo-icon" width="28" height="28" alt="" draggable="false">
+        <span class="nav-title">hayt</span>
+      </a>
       <div class="nav-actions">
         <button class="nav-btn" id="nav-sync" aria-label="Sync" title="Sincronizar">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
