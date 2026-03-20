@@ -4,6 +4,7 @@ import { clearEncryptionKey } from '../crypto.js';
 import { toast } from '../components/toast.js';
 import { startSync, stopSync, syncNow } from '../sync.js';
 import { DEFAULT_PROMPT_HOURS, APP_VERSION } from '../lib/constants.js';
+import { escapeAttr, isValidPat, isValidRepo } from '../lib/validators.js';
 
 const PROMPT_OPTIONS = [2, 4, 6, 8, 12, 24];
 
@@ -112,13 +113,13 @@ export function render(container) {
     const passVal = container.querySelector('#s-password').value;
 
     // Validate PAT format
-    if (patVal && !/^(ghp_|github_pat_)/.test(patVal)) {
+    if (patVal && !isValidPat(patVal)) {
       toast('Token debe empezar con ghp_ o github_pat_', 'error');
       return;
     }
 
     // Validate repo format
-    if (repoVal && !/^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/.test(repoVal)) {
+    if (repoVal && !isValidRepo(repoVal)) {
       toast('Formato: usuario/repositorio', 'error');
       return;
     }
@@ -148,8 +149,4 @@ export function render(container) {
   container.querySelector('#s-sync-now').addEventListener('click', () => {
     syncNow(true);
   });
-}
-
-function escapeAttr(str) {
-  return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

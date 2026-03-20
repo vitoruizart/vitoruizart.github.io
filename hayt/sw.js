@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
   '/hayt/js/github-api.js',
   '/hayt/js/lib/constants.js',
   '/hayt/js/lib/date-utils.js',
+  '/hayt/js/lib/validators.js',
   '/hayt/js/lib/update-checker.js',
   '/hayt/js/components/mood-faces.js',
   '/hayt/js/components/calendar-grid.js',

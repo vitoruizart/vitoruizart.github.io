@@ -19,7 +19,7 @@ import * as state from './state.js';
 const MAX_RETRIES = 3;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-function isValidMood(obj) {
+export function isValidMood(obj) {
   return obj
     && typeof obj.id === 'string'
     && typeof obj.timestamp === 'number'
@@ -72,7 +72,7 @@ async function resolveEncryptionKey(remoteSalt) {
   return key;
 }
 
-function safeParseJson(raw, label) {
+export function safeParseJson(raw, label) {
   try {
     return { ok: true, value: JSON.parse(raw) };
   } catch (err) {
