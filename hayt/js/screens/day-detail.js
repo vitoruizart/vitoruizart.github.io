@@ -206,8 +206,9 @@ async function editMood(container, dateStr, entryId, entry, newValue) {
   if (syncNow) syncNow();
   toast('Actualizado', 'success', 1500);
 
-  // Show note step instead of re-rendering immediately
-  showNoteStep(container, dateStr, updated);
+  // Show inline note step below the entry
+  const editPicker = container.querySelector('.edit-picker-inline');
+  showInlineNoteStep(editPicker, container, dateStr, updated, newValue);
 }
 
 async function addMoodForDay(container, dateStr, value) {
@@ -242,25 +243,30 @@ async function addMoodForDay(container, dateStr, value) {
   if (syncFn) syncFn();
   toast('Guardado', 'success', 1500);
 
-  // Show note step instead of re-rendering immediately
-  showNoteStep(container, dateStr, mood);
+  // Show note step in the add picker area
+  const picker = container.querySelector('#mood-picker');
+  showInlineNoteStep(picker, container, dateStr, mood, value);
 }
 
-function showNoteStep(container, dateStr, savedMood) {
-  // Replace the picker area with success + note option
-  const picker = container.querySelector('#mood-picker');
-  const editPicker = container.querySelector('.edit-picker-inline');
-  if (editPicker) editPicker.remove();
-
-  picker.classList.remove('hidden');
-  picker.innerHTML = `
+function showInlineNoteStep(targetEl, container, dateStr, savedMood, selectedValue) {
+  // Replace the picker content with selected mood + success + note option
+  targetEl.innerHTML = `
+    <div class="mood-grid mood-grid-small">
+      ${MOODS.map(m => `
+        <button class="mood-btn mood-btn-small" data-mood="${m.value}"
+          style="opacity:${m.value === selectedValue ? '1' : '0.4'};pointer-events:none" disabled>
+          ${moodFaceSvg(m.value, 56)}
+          <span class="mood-label">${m.label}</span>
+        </button>
+      `).join('')}
+    </div>
     <p class="mood-saved-msg">Estado de ánimo registrado</p>
     <div class="mood-post-actions">
       <button class="btn-primary" id="post-add-note">Añadir nota</button>
     </div>`;
 
-  picker.querySelector('#post-add-note').addEventListener('click', () => {
-    const actions = picker.querySelector('.mood-post-actions');
+  targetEl.querySelector('#post-add-note').addEventListener('click', () => {
+    const actions = targetEl.querySelector('.mood-post-actions');
     actions.innerHTML = `
       <div class="note-section">
         <textarea class="field-input note-input" id="day-mood-note"
