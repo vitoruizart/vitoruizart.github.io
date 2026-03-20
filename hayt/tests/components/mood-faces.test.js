@@ -50,6 +50,36 @@ describe('moodFaceSvg', () => {
     const svg = moodFaceSvg(1);
     expect(svg).toContain('cx="50" cy="50" r="46"');
   });
+
+  it('outer circle has solid fill', () => {
+    const svg = moodFaceSvg(3);
+    expect(svg).toContain('fill="currentColor"');
+    expect(svg).not.toContain('fill="none" stroke="currentColor" stroke-width="3"');
+  });
+
+  it('face features use white color', () => {
+    for (const mood of [1, 2, 3, 4, 5]) {
+      const svg = moodFaceSvg(mood);
+      expect(svg).toContain('#fff');
+    }
+  });
+
+  it('mood 5 has happy arc eyes and blush marks', () => {
+    const svg = moodFaceSvg(5);
+    // Arc eyes (path elements for ^_^ shape)
+    expect(svg).toContain('stroke="#fff"');
+    // Blush marks (low opacity circles)
+    expect(svg).toContain('opacity="0.3"');
+  });
+
+  it('mood 1 has tear drops and X eyes', () => {
+    const svg = moodFaceSvg(1);
+    // Tear drops (ellipses with opacity)
+    expect(svg).toContain('ellipse');
+    expect(svg).toContain('opacity="0.4"');
+    // X eyes (crossed lines)
+    expect(svg).toContain('<line');
+  });
 });
 
 describe('moodFaceSvgSmall', () => {
