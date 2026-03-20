@@ -8,8 +8,12 @@ import { startSync } from './sync.js';
 import { startUpdatePolling } from './lib/update-checker.js';
 import * as state from './state.js';
 
+const APP_VERSION = 'f02f34f';
+
 const navEl = document.getElementById('nav');
 const mainEl = document.getElementById('main');
+const versionEl = document.getElementById('app-version');
+if (versionEl) versionEl.textContent = `v${APP_VERSION}`;
 
 // Initialize state
 state.set('syncStatus', 'idle');

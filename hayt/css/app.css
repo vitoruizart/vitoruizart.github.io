@@ -48,6 +48,14 @@ body {
   position: relative;
 }
 
+#app-version {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 8px 0 calc(8px + var(--safe-bottom));
+  opacity: 0.5;
+}
+
 /* --- Top Nav --- */
 .top-nav {
   display: flex;
