@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Stub browser globals before importing
+const lsStore = new Map();
 vi.stubGlobal('localStorage', {
-  getItem: () => null,
-  setItem: () => {},
-  removeItem: () => {},
+  getItem: (k) => lsStore.get(k) ?? null,
+  setItem: (k, v) => lsStore.set(k, v),
+  removeItem: (k) => lsStore.delete(k),
 });
 vi.stubGlobal('caches', {
   keys: () => Promise.resolve([]),
@@ -26,6 +27,7 @@ let fetchMock;
 beforeEach(() => {
   fetchMock = vi.fn();
   vi.stubGlobal('fetch', fetchMock);
+  lsStore.clear();
   document.body.innerHTML = '';
 });
 
@@ -101,15 +103,12 @@ describe('checkForUpdate', () => {
     expect(btn.textContent).toContain('Actualizar');
   });
 
-  it('update button unregisters old SW and re-registers fresh one', async () => {
+  it('update button clears caches, unregisters SW, and stores applied version', async () => {
     const unregisterFn = vi.fn(() => Promise.resolve());
-    const registerFn = vi.fn(() =>
-      Promise.resolve({ installing: null, waiting: null, active: swActivated }),
-    );
     vi.stubGlobal('navigator', {
       serviceWorker: {
         getRegistration: () => Promise.resolve({ unregister: unregisterFn }),
-        register: registerFn,
+        register: () => Promise.resolve({ installing: null, waiting: null, active: swActivated }),
       },
     });
     vi.stubGlobal('caches', {
@@ -136,6 +135,27 @@ describe('checkForUpdate', () => {
 
     expect(caches.delete).toHaveBeenCalledWith('hayt-v3');
     expect(unregisterFn).toHaveBeenCalled();
-    expect(registerFn).toHaveBeenCalledWith('sw.js');
+    expect(lsStore.get('hayt-applied-version')).toBe('NEW_VERSION');
+  });
+
+  it('skips overlay when version matches hayt-applied-version', async () => {
+    lsStore.set('hayt-applied-version', 'NEW_VERSION');
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ version: 'NEW_VERSION' }),
+    });
+    const result = await checkForUpdate();
+    expect(result).toBe(false);
+    expect(document.querySelector('.update-overlay')).toBeNull();
+  });
+
+  it('clears hayt-applied-version when APP_VERSION catches up', async () => {
+    lsStore.set('hayt-applied-version', APP_VERSION);
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ version: APP_VERSION }),
+    });
+    await checkForUpdate();
+    expect(lsStore.has('hayt-applied-version')).toBe(false);
   });
 });

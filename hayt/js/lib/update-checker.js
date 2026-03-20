@@ -13,8 +13,15 @@ async function checkForUpdate() {
     if (!res.ok) return false;
     const { version } = await res.json();
     if (version && version !== APP_VERSION) {
-      showUpdateOverlay();
+      // If we just applied this update, the browser HTTP cache may still
+      // serve the old constants.js. Don't show the overlay again.
+      const applied = localStorage.getItem('hayt-applied-version');
+      if (applied === version) return false;
+      showUpdateOverlay(version);
       return true;
+    } else {
+      // APP_VERSION caught up — clear the transition marker
+      localStorage.removeItem('hayt-applied-version');
     }
   } catch { /* network error — ignore */ }
   return false;
@@ -45,7 +52,7 @@ export function startUpdatePolling() {
   window.addEventListener('focus', debouncedCheck);
 }
 
-function showUpdateOverlay() {
+function showUpdateOverlay(targetVersion) {
   if (document.querySelector('.update-overlay')) return;
 
   const overlay = document.createElement('div');
@@ -58,37 +65,20 @@ function showUpdateOverlay() {
     </div>`;
 
   overlay.querySelector('.update-btn').addEventListener('click', async () => {
+    // Mark which version we're updating to — prevents infinite loop if
+    // the browser HTTP cache still serves stale constants.js after reload
+    localStorage.setItem('hayt-applied-version', targetVersion);
+
     // 1. Delete all SW caches
     const keys = await caches.keys();
     await Promise.all(keys.map(k => caches.delete(k)));
 
-    // 2. Unregister current SW so stale HTTP-cached files don't get re-cached
+    // 2. Unregister current SW
     const oldReg = await navigator.serviceWorker.getRegistration();
     if (oldReg) await oldReg.unregister();
 
-    // 3. Re-register fresh SW — browser always fetches sw.js from network
-    //    The install handler uses cache:'reload' to bypass HTTP cache
-    try {
-      const newReg = await navigator.serviceWorker.register('sw.js');
-      const sw = newReg.installing || newReg.waiting;
-      if (sw && sw.state !== 'activated') {
-        await new Promise((resolve) => {
-          const handler = () => {
-            if (sw.state === 'activated') {
-              sw.removeEventListener('statechange', handler);
-              resolve();
-            }
-          };
-          sw.addEventListener('statechange', handler);
-          setTimeout(() => {
-            sw.removeEventListener('statechange', handler);
-            resolve();
-          }, 5000); // fallback if activation stalls
-        });
-      }
-    } catch { /* SW not supported or registration failed — reload anyway */ }
-
-    // 4. Reload — new SW with fresh cache serves the request
+    // 3. Reload — register-sw.js will re-register the SW on next load,
+    //    which installs fresh assets with cache:'reload'
     location.reload();
   });
 
