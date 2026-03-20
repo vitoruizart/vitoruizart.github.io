@@ -4,11 +4,11 @@ import { moodFaceSvgSmall } from './mood-faces.js';
 
 // Greyish blue (worst) → pinkish red (best)
 const MOOD_BG = {
-  1: 'rgba(120,135,155,0.30)',
-  2: 'rgba(140,130,160,0.30)',
-  3: 'rgba(160,120,155,0.30)',
-  4: 'rgba(185,105,130,0.30)',
-  5: 'rgba(210,90,110,0.30)',
+  1: 'rgba(100,130,170,0.50)',
+  2: 'rgba(140,115,175,0.50)',
+  3: 'rgba(175,95,155,0.50)',
+  4: 'rgba(205,75,115,0.50)',
+  5: 'rgba(230,55,85,0.50)',
 };
 
 const DAY_NAMES = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
