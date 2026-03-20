@@ -72,13 +72,14 @@ describe('moodFaceSvg', () => {
     expect(svg).toContain('opacity="0.3"');
   });
 
-  it('mood 1 has tear drops and X eyes', () => {
+  it('mood 1 has tear drops and chevron eyes', () => {
     const svg = moodFaceSvg(1);
     // Tear drops (ellipses with opacity)
     expect(svg).toContain('ellipse');
     expect(svg).toContain('opacity="0.4"');
-    // X eyes (crossed lines)
-    expect(svg).toContain('<line');
+    // >_< chevron eyes (path elements with round joins)
+    expect(svg).toContain('<path');
+    expect(svg).toContain('stroke-linejoin="round"');
   });
 });
 
