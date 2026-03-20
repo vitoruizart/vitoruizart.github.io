@@ -385,20 +385,34 @@ body {
 
 .entry-actions {
   display: flex;
-  gap: 4px;
+  gap: 8px;
 }
 
 .entry-edit, .entry-delete {
   background: none;
   border: none;
   color: var(--text-muted);
-  padding: 6px;
+  padding: 10px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
+  min-width: 40px;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
 }
 .entry-edit:active, .entry-delete:active { opacity: 0.5; }
+.entry-edit:hover { color: var(--text-primary); }
 .entry-delete:hover { color: #e74c3c; }
+.entry-delete.confirm {
+  background: #e74c3c;
+  color: #fff;
+  border-radius: var(--radius);
+  min-width: auto;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
 
 .day-empty {
   text-align: center;
