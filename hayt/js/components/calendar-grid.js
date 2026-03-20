@@ -22,29 +22,18 @@ export function renderCalendarGrid(year, month, moodsByDate, onDayClick) {
   const firstDay = getFirstDayOfWeek(year, month);
   const todayStr = toDateStr();
 
-  let html = '<div class="cal-grid" role="grid">';
+  let html = '<div class="cal-grid" role="grid" aria-label="Calendario mensual">';
 
   // Header row
-  html += '<div role="row">';
   html += DAY_NAMES.map(d => `<div class="cal-header" role="columnheader">${d}</div>`).join('');
-  html += '</div>';
-
-  // Build rows of 7 cells
-  let cellCount = 0;
-  html += '<div role="row">';
 
   // Empty cells before first day
   for (let i = 0; i < firstDay; i++) {
-    html += '<div class="cal-cell cal-empty" role="gridcell"></div>';
-    cellCount++;
+    html += '<div class="cal-cell cal-empty"></div>';
   }
 
   // Day cells
   for (let d = 1; d <= days; d++) {
-    if (cellCount > 0 && cellCount % 7 === 0) {
-      html += '</div><div role="row">';
-    }
-
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const entries = moodsByDate.get(dateStr) ?? [];
     const isToday = dateStr === todayStr;
@@ -66,16 +55,14 @@ export function renderCalendarGrid(year, month, moodsByDate, onDayClick) {
     }
 
     html += `<button class="cal-cell${isToday ? ' cal-today' : ''}${moodValue !== null ? ' cal-has-mood' : ''}"
-      data-date="${dateStr}" style="${bgStyle}" role="gridcell" aria-label="${ariaLabel}"${isToday ? ' aria-current="date"' : ''}>
+      data-date="${dateStr}" style="${bgStyle}" aria-label="${ariaLabel}"${isToday ? ' aria-current="date"' : ''}>
       <span class="cal-day-num">${d}</span>
       ${face ? `<span class="cal-face">${face}</span>` : ''}
       ${countBadge}
     </button>`;
-    cellCount++;
   }
 
-  html += '</div>'; // close last row
-  html += '</div>'; // close grid
+  html += '</div>';
 
   const el = document.createElement('div');
   el.innerHTML = html;
