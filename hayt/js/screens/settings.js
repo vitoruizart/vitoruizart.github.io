@@ -1,13 +1,17 @@
-// Settings screen — PAT, repo, encryption password, sync controls
+// Settings screen — General + Sync tabs
 import { testConnection } from '../github-api.js';
 import { clearEncryptionKey } from '../crypto.js';
 import { toast } from '../components/toast.js';
 import { startSync, stopSync, syncNow } from '../sync.js';
+import { DEFAULT_PROMPT_HOURS, APP_VERSION } from '../lib/constants.js';
+
+const PROMPT_OPTIONS = [2, 4, 6, 8, 12, 24];
 
 export function render(container) {
   const pat = localStorage.getItem('hayt-pat') ?? '';
   const repo = localStorage.getItem('hayt-repo') ?? '';
   const password = localStorage.getItem('hayt-password') ?? '';
+  const promptHours = localStorage.getItem('hayt-prompt-hours') ?? String(DEFAULT_PROMPT_HOURS);
 
   container.innerHTML = `
     <div class="settings-view">
@@ -18,41 +22,74 @@ export function render(container) {
         <h2 class="settings-title">Ajustes</h2>
       </div>
 
-      <div class="settings-section">
-        <h3 class="section-title">Sincronización</h3>
+      <div class="settings-tabs">
+        <button class="settings-tab-btn active" data-tab="general">General</button>
+        <button class="settings-tab-btn" data-tab="sync">Sincronización</button>
+      </div>
 
-        <label class="field-label" for="s-pat">GitHub Token (PAT)</label>
-        <input type="password" id="s-pat" class="field-input" value="${escapeAttr(pat)}"
-          placeholder="ghp_..." autocomplete="off" spellcheck="false">
-
-        <label class="field-label" for="s-repo">Repositorio</label>
-        <input type="text" id="s-repo" class="field-input" value="${escapeAttr(repo)}"
-          placeholder="usuario/repositorio" autocomplete="off" spellcheck="false">
-
-        <label class="field-label" for="s-password">Contraseña de encriptación</label>
-        <input type="password" id="s-password" class="field-input" value="${escapeAttr(password)}"
-          placeholder="Contraseña segura" autocomplete="off">
-
-        <div class="settings-actions">
-          <button class="btn-secondary" id="s-test">Probar conexión</button>
-          <button class="btn-primary" id="s-save">Guardar</button>
+      <div class="settings-tab" id="tab-general">
+        <div class="settings-section">
+          <h3 class="section-title">Frecuencia de registro</h3>
+          <label class="field-label" for="s-prompt-freq">Preguntar cada</label>
+          <select id="s-prompt-freq" class="field-input">
+            ${PROMPT_OPTIONS.map(h => `<option value="${h}"${String(h) === promptHours ? ' selected' : ''}>${h} horas</option>`).join('')}
+          </select>
         </div>
 
-        <div class="settings-actions">
-          <button class="btn-secondary" id="s-sync-now">Sincronizar ahora</button>
+        <div class="settings-section">
+          <h3 class="section-title">Información</h3>
+          <p class="settings-info">Los datos se guardan localmente y se sincronizan encriptados a tu repositorio de GitHub.</p>
+          <p class="settings-info settings-version">hayt v${escapeAttr(APP_VERSION)}</p>
         </div>
       </div>
 
-      <div class="settings-section">
-        <h3 class="section-title">Información</h3>
-        <p class="settings-info">Los datos se guardan localmente y se sincronizan encriptados a tu repositorio de GitHub.</p>
-        <p class="settings-info settings-version">hayt v1.0</p>
+      <div class="settings-tab hidden" id="tab-sync">
+        <div class="settings-section">
+          <h3 class="section-title">GitHub</h3>
+
+          <label class="field-label" for="s-pat">GitHub Token (PAT)</label>
+          <input type="password" id="s-pat" class="field-input" value="${escapeAttr(pat)}"
+            placeholder="ghp_..." autocomplete="off" spellcheck="false">
+
+          <label class="field-label" for="s-repo">Repositorio</label>
+          <input type="text" id="s-repo" class="field-input" value="${escapeAttr(repo)}"
+            placeholder="usuario/repositorio" autocomplete="off" spellcheck="false">
+
+          <label class="field-label" for="s-password">Contraseña de encriptación</label>
+          <input type="password" id="s-password" class="field-input" value="${escapeAttr(password)}"
+            placeholder="Contraseña segura" autocomplete="off">
+
+          <div class="settings-actions">
+            <button class="btn-secondary" id="s-test">Probar conexión</button>
+            <button class="btn-primary" id="s-save">Guardar</button>
+          </div>
+
+          <div class="settings-actions">
+            <button class="btn-secondary" id="s-sync-now">Sincronizar ahora</button>
+          </div>
+        </div>
       </div>
     </div>`;
+
+  // Tab switching
+  container.querySelectorAll('.settings-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      container.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      container.querySelectorAll('.settings-tab').forEach(t => t.classList.add('hidden'));
+      container.querySelector(`#tab-${btn.dataset.tab}`).classList.remove('hidden');
+    });
+  });
 
   // Back
   container.querySelector('#settings-back').addEventListener('click', () => {
     location.hash = '#calendar';
+  });
+
+  // Prompt frequency — auto-save on change
+  container.querySelector('#s-prompt-freq').addEventListener('change', (e) => {
+    localStorage.setItem('hayt-prompt-hours', e.target.value);
+    toast(`Frecuencia: cada ${e.target.value}h`, 'success', 1500);
   });
 
   // Test connection

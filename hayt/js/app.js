@@ -5,6 +5,7 @@ import { render as renderCalendar } from './screens/calendar.js';
 import { render as renderDayDetail } from './screens/day-detail.js';
 import { render as renderSettings } from './screens/settings.js';
 import { startSync } from './sync.js';
+import { startUpdatePolling } from './lib/update-checker.js';
 import * as state from './state.js';
 
 const navEl = document.getElementById('nav');
@@ -65,3 +66,6 @@ route();
 if (hasCredentials()) {
   startSync();
 }
+
+// Poll for app updates
+startUpdatePolling();

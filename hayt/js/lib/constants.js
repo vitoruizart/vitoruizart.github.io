@@ -19,4 +19,11 @@ export const COMPACTION_THRESHOLD = 30;
 export const POLL_INTERVAL_MS = 60_000;
 
 // Prompt
-export const PROMPT_COOLDOWN_MS = 8 * 60 * 60 * 1000; // 8 hours
+export const DEFAULT_PROMPT_HOURS = 8;
+export const APP_VERSION = '1.1.0';
+
+export function getPromptCooldownMs() {
+  const stored = localStorage.getItem('hayt-prompt-hours');
+  const hours = stored ? parseFloat(stored) : DEFAULT_PROMPT_HOURS;
+  return (isNaN(hours) || hours <= 0 ? DEFAULT_PROMPT_HOURS : hours) * 60 * 60 * 1000;
+}

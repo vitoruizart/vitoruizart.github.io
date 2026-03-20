@@ -1,5 +1,5 @@
 // Service worker — cache-first for static assets, skip GitHub API
-const CACHE_NAME = 'hayt-v1';
+const CACHE_NAME = 'hayt-v2';
 const STATIC_ASSETS = [
   '/hayt/',
   '/hayt/index.html',
@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
   '/hayt/js/github-api.js',
   '/hayt/js/lib/constants.js',
   '/hayt/js/lib/date-utils.js',
+  '/hayt/js/lib/update-checker.js',
   '/hayt/js/components/mood-faces.js',
   '/hayt/js/components/calendar-grid.js',
   '/hayt/js/components/trend-chart.js',
@@ -48,6 +49,9 @@ self.addEventListener('fetch', (event) => {
 
   // Never cache GitHub API calls
   if (url.hostname === 'api.github.com') return;
+
+  // Never cache version.json — used for update checks
+  if (url.pathname.endsWith('/version.json')) return;
 
   // Cache-first for static assets
   event.respondWith(

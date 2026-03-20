@@ -27,17 +27,18 @@ export function renderCalendarGrid(year, month, moodsByDate, onDayClick) {
     const entries = moodsByDate.get(dateStr) ?? [];
     const isToday = dateStr === todayStr;
 
-    // Dominant mood = most recent entry for that day
-    const dominant = entries.length > 0
-      ? entries.reduce((a, b) => a.timestamp > b.timestamp ? a : b)
-      : null;
-
-    const moodInfo = dominant ? getMood(dominant.mood) : null;
+    // Average mood for the day
+    let moodValue = null;
+    if (entries.length > 0) {
+      const sum = entries.reduce((acc, e) => acc + e.mood, 0);
+      moodValue = Math.round(sum / entries.length);
+    }
+    const moodInfo = moodValue !== null ? getMood(moodValue) : null;
     const dotColor = moodInfo ? moodInfo.color : 'transparent';
-    const face = dominant ? moodFaceSvgSmall(dominant.mood, 24) : '';
+    const face = moodValue !== null ? moodFaceSvgSmall(moodValue, 24) : '';
     const countBadge = entries.length > 1 ? `<span class="cal-count">${entries.length}</span>` : '';
 
-    html += `<button class="cal-cell${isToday ? ' cal-today' : ''}${dominant ? ' cal-has-mood' : ''}"
+    html += `<button class="cal-cell${isToday ? ' cal-today' : ''}${moodValue !== null ? ' cal-has-mood' : ''}"
       data-date="${dateStr}" style="--mood-color:${dotColor}">
       <span class="cal-day-num">${d}</span>
       ${face ? `<span class="cal-face">${face}</span>` : ''}

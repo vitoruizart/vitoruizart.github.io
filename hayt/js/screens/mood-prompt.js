@@ -1,5 +1,5 @@
 // "¿Cómo estás?" mood prompt screen
-import { MOODS, PROMPT_COOLDOWN_MS } from '../lib/constants.js';
+import { MOODS, getPromptCooldownMs } from '../lib/constants.js';
 import { toDateStr, toTimeStr } from '../lib/date-utils.js';
 import { moodFaceSvg } from '../components/mood-faces.js';
 import { putMood, addChangeEntry, getRecentMoods } from '../db.js';
@@ -7,7 +7,7 @@ import { toast } from '../components/toast.js';
 import * as state from '../state.js';
 
 export async function shouldShowPrompt() {
-  const since = Date.now() - PROMPT_COOLDOWN_MS;
+  const since = Date.now() - getPromptCooldownMs();
   const recent = await getRecentMoods(since);
   return recent.length === 0;
 }

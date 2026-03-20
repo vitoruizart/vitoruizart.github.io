@@ -67,6 +67,8 @@ export async function render(container, dateStr) {
       });
       state.set('syncStatus', 'pending');
       state.set('moodsUpdated', Date.now());
+      const { syncNow } = window._haytSync ?? {};
+      if (syncNow) syncNow();
       toast('Eliminado', 'success', 1500);
       render(container, dateStr);
     });
@@ -133,6 +135,8 @@ async function editMood(container, dateStr, entryId, entry, newValue) {
   });
   state.set('syncStatus', 'pending');
   state.set('moodsUpdated', Date.now());
+  const { syncNow } = window._haytSync ?? {};
+  if (syncNow) syncNow();
   toast('Actualizado', 'success', 1500);
   render(container, dateStr);
 }
@@ -159,6 +163,8 @@ async function addMoodForDay(container, dateStr, value) {
   });
   state.set('syncStatus', 'pending');
   state.set('moodsUpdated', Date.now());
+  const { syncNow: syncFn } = window._haytSync ?? {};
+  if (syncFn) syncFn();
   toast('Guardado', 'success', 1500);
   render(container, dateStr);
 }
