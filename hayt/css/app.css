@@ -191,17 +191,18 @@ body {
 
 /* --- Mood Banner --- */
 .mood-banner {
-  background: var(--bg-card);
+  background: linear-gradient(135deg, rgba(243,156,18,0.18) 0%, rgba(243,156,18,0.06) 100%);
+  border: 1px solid rgba(243,156,18,0.25);
   border-radius: var(--radius);
-  padding: 16px 20px;
+  padding: 20px 24px;
   margin-bottom: 16px;
   text-align: center;
 }
 .mood-banner-text {
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 17px;
+  font-weight: 600;
   line-height: 1.5;
-  color: var(--text);
+  color: #f5e6cc;
 }
 
 /* --- Calendar View --- */
