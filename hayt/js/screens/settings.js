@@ -126,14 +126,20 @@ export function render(container) {
       return;
     }
 
-    if (patVal) localStorage.setItem('hayt-pat', patVal);
-    else localStorage.removeItem('hayt-pat');
+    try {
+      if (patVal) localStorage.setItem('hayt-pat', patVal);
+      else localStorage.removeItem('hayt-pat');
 
-    if (repoVal) localStorage.setItem('hayt-repo', repoVal);
-    else localStorage.removeItem('hayt-repo');
+      if (repoVal) localStorage.setItem('hayt-repo', repoVal);
+      else localStorage.removeItem('hayt-repo');
 
-    if (passVal) localStorage.setItem('hayt-password', passVal);
-    else localStorage.removeItem('hayt-password');
+      if (passVal) localStorage.setItem('hayt-password', passVal);
+      else localStorage.removeItem('hayt-password');
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      toast('Error al guardar ajustes', 'error');
+      return;
+    }
 
     // Clear cached key when password changes
     clearEncryptionKey();

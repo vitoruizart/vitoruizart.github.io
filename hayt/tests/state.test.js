@@ -70,4 +70,15 @@ describe('state', () => {
     state.update(key, prev => (prev ?? 0) + 1);
     expect(state.get(key)).toBe(1);
   });
+
+  it('throwing listener does not prevent other listeners from firing', () => {
+    const key = 'throw-key-' + Math.random();
+    const fn1 = vi.fn(() => { throw new Error('boom'); });
+    const fn2 = vi.fn();
+    state.on(key, fn1);
+    state.on(key, fn2);
+    state.set(key, 'val');
+    expect(fn1).toHaveBeenCalledWith('val');
+    expect(fn2).toHaveBeenCalledWith('val');
+  });
 });

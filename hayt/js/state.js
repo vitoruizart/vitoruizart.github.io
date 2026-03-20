@@ -9,7 +9,9 @@ export function get(key) {
 export function set(key, value) {
   state[key] = value;
   const subs = listeners.get(key);
-  if (subs) for (const fn of subs) fn(value);
+  if (subs) for (const fn of subs) {
+    try { fn(value); } catch (err) { console.error(`state listener error [${key}]:`, err); }
+  }
 }
 
 export function on(key, fn) {

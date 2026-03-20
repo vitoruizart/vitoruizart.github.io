@@ -118,6 +118,18 @@ describe('isValidMood', () => {
   it('rejects empty object', () => {
     expect(isValidMood({})).toBeFalsy();
   });
+
+  it('rejects string input', () => {
+    expect(isValidMood('hello')).toBeFalsy();
+  });
+
+  it('rejects number input', () => {
+    expect(isValidMood(42)).toBeFalsy();
+  });
+
+  it('rejects boolean input', () => {
+    expect(isValidMood(true)).toBeFalsy();
+  });
 });
 
 describe('safeParseJson', () => {

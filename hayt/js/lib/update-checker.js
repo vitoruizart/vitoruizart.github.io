@@ -73,13 +73,17 @@ function showUpdateOverlay() {
       const sw = newReg.installing || newReg.waiting;
       if (sw && sw.state !== 'activated') {
         await new Promise((resolve) => {
-          sw.addEventListener('statechange', function handler() {
+          const handler = () => {
             if (sw.state === 'activated') {
               sw.removeEventListener('statechange', handler);
               resolve();
             }
-          });
-          setTimeout(resolve, 5000); // fallback if activation stalls
+          };
+          sw.addEventListener('statechange', handler);
+          setTimeout(() => {
+            sw.removeEventListener('statechange', handler);
+            resolve();
+          }, 5000); // fallback if activation stalls
         });
       }
     } catch { /* SW not supported or registration failed — reload anyway */ }

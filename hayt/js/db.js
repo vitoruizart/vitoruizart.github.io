@@ -100,7 +100,7 @@ export async function clearChangeEntries() {
 
 export async function deleteChangeEntries(ids) {
   const { stores } = await tx(['changelog'], 'readwrite');
-  for (const id of ids) stores[0].delete(id);
+  for (const id of ids) await promisify(stores[0].delete(id));
 }
 
 // --- Meta ---

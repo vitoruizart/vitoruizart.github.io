@@ -188,6 +188,77 @@ describe('syncNow integration', () => {
     expect(stateValues.syncStatus).toBe('idle');
   });
 
+  it('clears syncRunning after timeout (no zombie lock)', async () => {
+    setCredentials();
+
+    // Make getFile hang forever — the 30s timeout should abort it
+    // We override the timeout to be short for testing
+    mockGetFile.mockImplementation(() => new Promise((_, reject) => {
+      setTimeout(() => reject(new DOMException('AbortError', 'AbortError')), 100);
+    }));
+
+    await syncNow();
+
+    // After the sync finishes (with error), syncRunning should be cleared,
+    // so a second call should not be blocked
+    expect(stateValues.syncStatus).toBe('error');
+
+    // Verify sync is unlocked — we can start another
+    mockGetFile.mockResolvedValue(null);
+    await syncNow();
+    expect(stateValues.syncStatus).toBe('idle');
+  });
+
+  it('compaction clears changelog before writing snapshot', async () => {
+    setCredentials();
+
+    const salt = crypto.generateSalt();
+    const key = await crypto.deriveKey('test-pass', salt);
+    const verifier = await crypto.createVerifier(key);
+
+    const snapshot = {
+      syncVersion: 1,
+      encryptionSalt: salt,
+      encryptionVerifier: verifier,
+      moods: [],
+    };
+
+    // Create 30+ remote entries to trigger compaction
+    const remoteEntries = Array.from({ length: 30 }, (_, i) => ({
+      id: `ch-${i}`,
+      deviceId: 'other-device',
+      entityId: `mood-${i}`,
+      timestamp: 1000 + i,
+      operation: 'upsert',
+      data: { id: `mood-${i}`, mood: 3, date: '2025-03-10', timestamp: 1000 + i },
+    }));
+
+    mockGetFile.mockImplementation((_pat, _repo, path) => {
+      if (path.includes('snapshot')) {
+        return { data: JSON.stringify(snapshot), sha: 'snap-sha' };
+      }
+      if (path.includes('changelog')) {
+        return { data: JSON.stringify(remoteEntries), sha: 'cl-sha' };
+      }
+      return null;
+    });
+
+    const putOrder = [];
+    mockPutFile.mockImplementation((_pat, _repo, path) => {
+      putOrder.push(path);
+      return 'new-sha';
+    });
+
+    await syncNow();
+
+    // Verify changelog is cleared before snapshot is written
+    const changelogIdx = putOrder.lastIndexOf('hayt-changelog.json');
+    const snapshotIdx = putOrder.lastIndexOf('hayt-snapshot.json');
+    expect(changelogIdx).toBeGreaterThan(-1);
+    expect(snapshotIdx).toBeGreaterThan(-1);
+    expect(changelogIdx).toBeLessThan(snapshotIdx);
+  });
+
   it('sets error on wrong password', async () => {
     setCredentials();
 

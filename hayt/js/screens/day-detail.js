@@ -5,7 +5,7 @@ import { getMood as getMoodDef } from '../lib/constants.js';
 import { moodFaceSvg } from '../components/mood-faces.js';
 import { getMoodsByDate, putMood, deleteMood as dbDeleteMood, addChangeEntry } from '../db.js';
 import { toast } from '../components/toast.js';
-import { getDeviceId } from './mood-prompt.js';
+import { getDeviceId } from '../sync.js';
 import * as state from '../state.js';
 
 export async function render(container, dateStr) {
@@ -73,15 +73,21 @@ export async function render(container, dateStr) {
       // Second tap: actually delete
       clearTimeout(confirmTimeout);
       const id = btn.dataset.id;
-      await dbDeleteMood(id);
-      await addChangeEntry({
-        id: crypto.randomUUID(),
-        timestamp: Date.now(),
-        entityType: 'mood',
-        entityId: id,
-        operation: 'delete',
-        deviceId: getDeviceId(),
-      });
+      try {
+        await dbDeleteMood(id);
+        await addChangeEntry({
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+          entityType: 'mood',
+          entityId: id,
+          operation: 'delete',
+          deviceId: getDeviceId(),
+        });
+      } catch (err) {
+        console.error('Failed to delete mood:', err);
+        toast('Error al eliminar', 'error');
+        return;
+      }
       state.set('syncStatus', 'pending');
       state.set('moodsUpdated', Date.now());
       const { syncNow } = window._haytSync ?? {};
@@ -170,16 +176,22 @@ function showEditPicker(container, dateStr, entryId, entry) {
 
 async function editMood(container, dateStr, entryId, entry, newValue) {
   const updated = { ...entry, mood: newValue };
-  await putMood(updated);
-  await addChangeEntry({
-    id: crypto.randomUUID(),
-    timestamp: Date.now(),
-    entityType: 'mood',
-    entityId: entryId,
-    operation: 'upsert',
-    data: { ...updated },
-    deviceId: getDeviceId(),
-  });
+  try {
+    await putMood(updated);
+    await addChangeEntry({
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      entityType: 'mood',
+      entityId: entryId,
+      operation: 'upsert',
+      data: { ...updated },
+      deviceId: getDeviceId(),
+    });
+  } catch (err) {
+    console.error('Failed to update mood:', err);
+    toast('Error al actualizar', 'error');
+    return;
+  }
   state.set('syncStatus', 'pending');
   state.set('moodsUpdated', Date.now());
   const { syncNow } = window._haytSync ?? {};
@@ -198,16 +210,22 @@ async function addMoodForDay(container, dateStr, value) {
     mood: value,
     deviceId: getDeviceId(),
   };
-  await putMood(mood);
-  await addChangeEntry({
-    id: crypto.randomUUID(),
-    timestamp: Date.now(),
-    entityType: 'mood',
-    entityId: mood.id,
-    operation: 'upsert',
-    data: { ...mood },
-    deviceId: getDeviceId(),
-  });
+  try {
+    await putMood(mood);
+    await addChangeEntry({
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      entityType: 'mood',
+      entityId: mood.id,
+      operation: 'upsert',
+      data: { ...mood },
+      deviceId: getDeviceId(),
+    });
+  } catch (err) {
+    console.error('Failed to save mood:', err);
+    toast('Error al guardar', 'error');
+    return;
+  }
   state.set('syncStatus', 'pending');
   state.set('moodsUpdated', Date.now());
   const { syncNow: syncFn } = window._haytSync ?? {};

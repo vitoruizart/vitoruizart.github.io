@@ -4,6 +4,7 @@ import { toDateStr, toTimeStr } from '../lib/date-utils.js';
 import { moodFaceSvg } from '../components/mood-faces.js';
 import { putMood, addChangeEntry, getRecentMoods } from '../db.js';
 import { toast } from '../components/toast.js';
+import { getDeviceId } from '../sync.js';
 import * as state from '../state.js';
 
 export async function shouldShowPrompt() {
@@ -42,16 +43,22 @@ async function recordMood(value) {
     deviceId: getDeviceId(),
   };
 
-  await putMood(mood);
-  await addChangeEntry({
-    id: crypto.randomUUID(),
-    timestamp: Date.now(),
-    entityType: 'mood',
-    entityId: mood.id,
-    operation: 'upsert',
-    data: { ...mood },
-    deviceId: getDeviceId(),
-  });
+  try {
+    await putMood(mood);
+    await addChangeEntry({
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      entityType: 'mood',
+      entityId: mood.id,
+      operation: 'upsert',
+      data: { ...mood },
+      deviceId: getDeviceId(),
+    });
+  } catch (err) {
+    console.error('Failed to save mood:', err);
+    toast('Error al guardar', 'error');
+    return;
+  }
 
   state.set('syncStatus', 'pending');
   toast('Guardado', 'success', 1500);
@@ -63,14 +70,3 @@ async function recordMood(value) {
   // Navigate to calendar
   location.hash = '#calendar';
 }
-
-function getDeviceId() {
-  let id = localStorage.getItem('hayt-device-id');
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem('hayt-device-id', id);
-  }
-  return id;
-}
-
-export { getDeviceId };

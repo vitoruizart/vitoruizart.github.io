@@ -62,8 +62,16 @@ async function route() {
 renderNav(navEl);
 
 // Hash-based routing
-window.addEventListener('hashchange', route);
-route();
+window.addEventListener('hashchange', () => {
+  route().catch(err => {
+    console.error('Route error:', err);
+    if (location.hash !== '#calendar') location.hash = '#calendar';
+  });
+});
+route().catch(err => {
+  console.error('Initial route error:', err);
+  if (location.hash !== '#calendar') location.hash = '#calendar';
+});
 
 // Start sync if credentials exist
 if (hasCredentials()) {

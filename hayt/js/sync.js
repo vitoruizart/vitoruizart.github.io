@@ -21,6 +21,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function isValidMood(obj) {
   return obj
+    && typeof obj === 'object'
     && typeof obj.id === 'string'
     && typeof obj.timestamp === 'number'
     && typeof obj.date === 'string' && DATE_RE.test(obj.date)
@@ -47,7 +48,7 @@ function getCredentials() {
   return { pat, repo, password };
 }
 
-function getDeviceId() {
+export function getDeviceId() {
   let id = localStorage.getItem('hayt-device-id');
   if (!id) {
     id = crypto.randomUUID();
@@ -66,7 +67,7 @@ async function resolveEncryptionKey(remoteSalt) {
     if (!remoteSalt) return getCachedEncryptionKey();
   }
 
-  const salt = remoteSalt || generateSalt();
+  const salt = remoteSalt || getCachedSalt() || generateSalt();
   const key = await deriveKey(creds.password, salt);
   cacheEncryptionKey(key, salt);
   return key;
@@ -92,14 +93,18 @@ export async function syncNow(manual = false) {
   syncRunning = true;
   state.set('syncStatus', 'syncing');
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30_000);
+
   try {
     cachedCreds = creds;
     const deviceId = getDeviceId();
+    const signal = controller.signal;
 
     // Fetch remote files in parallel
     const [remoteSnapshotFile, remoteChangelogFile] = await Promise.all([
-      getFile(creds.pat, creds.repo, SNAPSHOT_FILE),
-      getFile(creds.pat, creds.repo, CHANGELOG_FILE),
+      getFile(creds.pat, creds.repo, SNAPSHOT_FILE, signal),
+      getFile(creds.pat, creds.repo, CHANGELOG_FILE, signal),
     ]);
 
     // Resolve encryption key
@@ -211,14 +216,14 @@ export async function syncNow(manual = false) {
           const newSha = await putFile(
             creds.pat, creds.repo, CHANGELOG_FILE,
             JSON.stringify(payload),
-            changelogSha,
+            changelogSha, signal,
           );
           changelogSha = newSha;
           pushed = true;
         } catch (err) {
           if (err.message === 'CONFLICT' && attempt < MAX_RETRIES - 1) {
             // Re-fetch remote entries and retry
-            const fresh = await getFile(creds.pat, creds.repo, CHANGELOG_FILE);
+            const fresh = await getFile(creds.pat, creds.repo, CHANGELOG_FILE, signal);
             if (fresh) {
               const parsed = safeParseJson(fresh.data, 'changelog retry');
               remoteEntries = parsed.ok ? parsed.value : [];
@@ -242,7 +247,7 @@ export async function syncNow(manual = false) {
     // --- COMPACTION: merge changelog into snapshot ---
     const totalEntries = remoteEntries.length + localEntries.length;
     if (totalEntries >= COMPACTION_THRESHOLD) {
-      await compact(creds, encKey, snapshotSha, changelogSha);
+      await compact(creds, encKey, snapshotSha, changelogSha, signal);
     }
 
     // Update sync metadata
@@ -260,11 +265,12 @@ export async function syncNow(manual = false) {
       toast(`Límite de API. Espera ${waitSec}s`, 'error', 5000);
     }
   } finally {
+    clearTimeout(timeoutId);
     syncRunning = false;
   }
 }
 
-async function compact(creds, encKey, snapshotSha, changelogSha) {
+async function compact(creds, encKey, snapshotSha, changelogSha, signal) {
   try {
     const allMoods = await getAllMoods();
     const salt = getCachedSalt() || generateSalt();
@@ -280,11 +286,13 @@ async function compact(creds, encKey, snapshotSha, changelogSha) {
       moods: encryptedMoods,
     };
 
-    await putFile(creds.pat, creds.repo, SNAPSHOT_FILE, JSON.stringify(snapshot), snapshotSha);
-    await putFile(creds.pat, creds.repo, CHANGELOG_FILE, '[]', changelogSha);
+    // Clear changelog FIRST — if snapshot write fails, data is safe in local
+    // IndexedDB and will be re-pushed. Changelog entries are idempotent (upsert by ID).
+    const newChangelogSha = await putFile(creds.pat, creds.repo, CHANGELOG_FILE, '[]', changelogSha, signal);
+    await putFile(creds.pat, creds.repo, SNAPSHOT_FILE, JSON.stringify(snapshot), snapshotSha, signal);
 
     cachedRemoteEntries = [];
-    cachedChangelogSha = undefined;
+    cachedChangelogSha = newChangelogSha;
   } catch (err) {
     console.warn('Compaction failed (non-critical):', err);
   }
@@ -309,7 +317,8 @@ async function flushOnHide() {
     }
     const updatedChangelog = [...cachedRemoteEntries, ...encrypted];
     putFile(cachedCreds.pat, cachedCreds.repo, CHANGELOG_FILE,
-      JSON.stringify(updatedChangelog), cachedChangelogSha, undefined, { keepalive: true });
+      JSON.stringify(updatedChangelog), cachedChangelogSha, undefined, { keepalive: true })
+      .catch(() => {}); // Best-effort — data is safe in IndexedDB
   } catch {
     // Best-effort — data is safe in local IndexedDB
   }

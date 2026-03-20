@@ -140,7 +140,12 @@ export async function decryptEntity(key, entity) {
   if (!entity._enc || typeof entity._enc !== 'string') return entity;
 
   const plaintext = await decryptBlob(key, entity._enc);
-  const sensitiveData = JSON.parse(plaintext);
+  let sensitiveData;
+  try {
+    sensitiveData = JSON.parse(plaintext);
+  } catch {
+    throw new Error('decryptEntity: malformed JSON in decrypted data');
+  }
 
   const result = {};
   for (const [k, v] of Object.entries(entity)) {

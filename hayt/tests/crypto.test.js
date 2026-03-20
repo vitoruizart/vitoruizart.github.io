@@ -120,6 +120,13 @@ describe('encryptEntity / decryptEntity', () => {
     const result = await decryptEntity(key, entity);
     expect(result).toEqual(entity);
   });
+
+  it('decryptEntity rejects with "malformed JSON" for non-JSON encrypted data', async () => {
+    const { key } = await makeKey();
+    const blob = await encryptBlob(key, 'not valid json {{{');
+    const entity = { id: 'abc', _enc: blob };
+    await expect(decryptEntity(key, entity)).rejects.toThrow('malformed JSON');
+  });
 });
 
 describe('createVerifier / checkVerifier', () => {
