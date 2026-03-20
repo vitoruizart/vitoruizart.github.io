@@ -5,6 +5,7 @@ import { toast } from '../components/toast.js';
 import { startSync, stopSync, syncNow } from '../sync.js';
 import { DEFAULT_PROMPT_HOURS, APP_VERSION } from '../lib/constants.js';
 import { escapeAttr, isValidPat, isValidRepo } from '../lib/validators.js';
+import { checkForUpdate } from '../lib/update-checker.js';
 
 const PROMPT_OPTIONS = [2, 4, 6, 8, 12, 24];
 
@@ -146,8 +147,9 @@ export function render(container) {
     }
   });
 
-  // Sync now
+  // Sync now + version check
   container.querySelector('#s-sync-now').addEventListener('click', () => {
     syncNow(true);
+    checkForUpdate();
   });
 }
