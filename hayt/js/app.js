@@ -6,9 +6,8 @@ import { render as renderDayDetail } from './screens/day-detail.js';
 import { render as renderSettings } from './screens/settings.js';
 import { startSync } from './sync.js';
 import { startUpdatePolling } from './lib/update-checker.js';
+import { APP_VERSION } from './lib/constants.js';
 import * as state from './state.js';
-
-const APP_VERSION = '74256bb';
 
 const navEl = document.getElementById('nav');
 const mainEl = document.getElementById('main');

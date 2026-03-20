@@ -7,6 +7,7 @@ export default defineConfig({
     environment: 'node',
     environmentMatchGlobs: [
       ['tests/components/calendar-grid.test.js', 'happy-dom'],
+      ['tests/lib/update-checker.test.js', 'happy-dom'],
     ],
     globals: false,
     testTimeout: 10_000,

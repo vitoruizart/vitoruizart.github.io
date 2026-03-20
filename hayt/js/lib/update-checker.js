@@ -1,7 +1,12 @@
-// Version check — polls version.json and shows update overlay when new version detected
+// Version check — polls version.json, foreground-aware with debounce
+// Shows blocking overlay when new version detected
 import { APP_VERSION } from './constants.js';
 
-export async function checkForUpdate() {
+const POLL_INTERVAL_MS = 30 * 60 * 1000;     // 30 minutes periodic
+const MIN_CHECK_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes debounce on focus/visibility
+let lastCheckTime = 0;
+
+async function checkForUpdate() {
   try {
     const res = await fetch('/hayt/version.json', { cache: 'no-store' });
     if (!res.ok) return false;
@@ -14,9 +19,29 @@ export async function checkForUpdate() {
   return false;
 }
 
-export function startUpdatePolling(intervalMs = 60_000) {
+function debouncedCheck() {
+  const now = Date.now();
+  if (now - lastCheckTime < MIN_CHECK_INTERVAL_MS) return;
+  lastCheckTime = now;
   checkForUpdate();
-  setInterval(checkForUpdate, intervalMs);
+}
+
+export function startUpdatePolling() {
+  // Initial check
+  lastCheckTime = Date.now();
+  checkForUpdate();
+
+  // Periodic fallback
+  setInterval(() => {
+    lastCheckTime = Date.now();
+    checkForUpdate();
+  }, POLL_INTERVAL_MS);
+
+  // Foreground detection — check when user returns to the app
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') debouncedCheck();
+  });
+  window.addEventListener('focus', debouncedCheck);
 }
 
 function showUpdateOverlay() {
@@ -40,8 +65,12 @@ function showUpdateOverlay() {
     const reg = await navigator.serviceWorker.getRegistration();
     if (reg) await reg.update();
 
-    location.reload();
+    // Fallback: in standalone PWA on some platforms, controllerchange may not
+    // fire, so force reload after a short delay to ensure skipWaiting completes.
+    setTimeout(() => location.reload(), 2000);
   });
 
   document.body.appendChild(overlay);
 }
+
+export { checkForUpdate };

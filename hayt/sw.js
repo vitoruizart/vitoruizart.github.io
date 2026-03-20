@@ -1,5 +1,5 @@
 // Service worker — cache-first for static assets, skip GitHub API
-const CACHE_NAME = 'hayt-v2';
+const CACHE_NAME = 'hayt-v3';
 const STATIC_ASSETS = [
   '/hayt/',
   '/hayt/index.html',
