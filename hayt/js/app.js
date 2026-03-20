@@ -8,7 +8,7 @@ import { startSync } from './sync.js';
 import { startUpdatePolling } from './lib/update-checker.js';
 import * as state from './state.js';
 
-const APP_VERSION = 'f02f34f';
+const APP_VERSION = '74256bb';
 
 const navEl = document.getElementById('nav');
 const mainEl = document.getElementById('main');
