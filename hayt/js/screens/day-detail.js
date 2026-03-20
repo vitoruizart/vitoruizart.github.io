@@ -17,6 +17,10 @@ export async function render(container, dateStr) {
   const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
   const title = `${dayNames[dateObj.getDay()]} ${dateObj.getDate()} de ${monthNames[dateObj.getMonth()]}`;
+  const isToday = dateStr === toDateStr(new Date());
+  const pickerTitle = isToday
+    ? '¿Cómo estás hoy?'
+    : `¿Cómo estabas el ${dateObj.getDate()} de ${monthNames[dateObj.getMonth()]}?`;
 
   container.innerHTML = `
     <div class="day-detail">
@@ -35,7 +39,7 @@ export async function render(container, dateStr) {
         <button class="btn-primary" id="day-add">Agregar estado de ánimo</button>
       </div>
       <div class="mood-picker hidden" id="mood-picker">
-        <h3 class="picker-title">¿Cómo estabas?</h3>
+        <h3 class="picker-title">${pickerTitle}</h3>
         <div class="mood-grid mood-grid-small">
           ${MOODS.map(m => `
             <button class="mood-btn mood-btn-small" data-mood="${m.value}">

@@ -15,7 +15,7 @@ export async function shouldShowPrompt() {
 export function render(container) {
   container.innerHTML = `
     <div class="mood-prompt">
-      <h1 class="prompt-title">¿Cómo estás?</h1>
+      <h1 class="prompt-title">¿Cómo estás hoy?</h1>
       <div class="mood-grid">
         ${MOODS.map(m => `
           <button class="mood-btn" data-mood="${m.value}" aria-label="${m.label}">
