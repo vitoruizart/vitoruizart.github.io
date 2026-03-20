@@ -352,15 +352,12 @@ const MESSAGE_POOLS = {
   ],
 };
 
-// --- Message selection with cross-category blending ---
+// --- Message selection ---
 
 function selectMessage(categoryKey) {
-  const primary = MESSAGE_POOLS[categoryKey];
-  const merged = categoryKey === 'default'
-    ? primary
-    : [...primary, ...MESSAGE_POOLS.default];
+  const pool = MESSAGE_POOLS[categoryKey];
   const dayOfYear = getDayOfYear(toDateStr());
-  return merged[dayOfYear % merged.length];
+  return pool[dayOfYear % pool.length];
 }
 
 // --- Public render function ---
