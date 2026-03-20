@@ -4,6 +4,7 @@ const STATIC_ASSETS = [
   '/hayt/',
   '/hayt/index.html',
   '/hayt/css/app.css',
+  '/hayt/js/register-sw.js',
   '/hayt/js/app.js',
   '/hayt/js/db.js',
   '/hayt/js/state.js',

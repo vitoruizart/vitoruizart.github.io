@@ -36,6 +36,10 @@ async function route() {
     renderMoodPrompt(mainEl);
   } else if (hash.startsWith('#day/')) {
     const dateStr = hash.slice(5);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      location.hash = '#calendar';
+      return;
+    }
     renderDayDetail(mainEl, dateStr);
   } else if (hash === '#calendar') {
     renderCalendar(mainEl);

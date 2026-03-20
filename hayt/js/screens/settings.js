@@ -74,6 +74,18 @@ export function render(container) {
     const repoVal = container.querySelector('#s-repo').value.trim();
     const passVal = container.querySelector('#s-password').value;
 
+    // Validate PAT format
+    if (patVal && !/^(ghp_|github_pat_)/.test(patVal)) {
+      toast('Token debe empezar con ghp_ o github_pat_', 'error');
+      return;
+    }
+
+    // Validate repo format
+    if (repoVal && !/^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/.test(repoVal)) {
+      toast('Formato: usuario/repositorio', 'error');
+      return;
+    }
+
     if (patVal) localStorage.setItem('hayt-pat', patVal);
     else localStorage.removeItem('hayt-pat');
 

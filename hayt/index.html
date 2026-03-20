@@ -13,18 +13,16 @@
   <meta name="apple-mobile-web-app-title" content="hayt">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
 
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; connect-src 'self' https://api.github.com; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self';">
+
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
   <div id="nav"></div>
   <div id="main"></div>
 
-  <script>
-    // Register service worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    }
-  </script>
+  <script src="js/register-sw.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

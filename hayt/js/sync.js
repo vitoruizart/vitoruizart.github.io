@@ -17,6 +17,15 @@ import { toast } from './components/toast.js';
 import * as state from './state.js';
 
 const MAX_RETRIES = 3;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function isValidMood(obj) {
+  return obj
+    && typeof obj.id === 'string'
+    && typeof obj.timestamp === 'number'
+    && typeof obj.date === 'string' && DATE_RE.test(obj.date)
+    && typeof obj.mood === 'number' && obj.mood >= 1 && obj.mood <= 5;
+}
 
 // Sync lock
 let syncRunning = false;
@@ -149,6 +158,7 @@ export async function syncNow(manual = false) {
       for (const remoteMood of snapshotData.moods) {
         try {
           const decrypted = await decryptEntity(encKey, remoteMood);
+          if (!isValidMood(decrypted)) continue;
           if (!localMoods.has(decrypted.id)) {
             await putMood(decrypted);
           } else {
@@ -170,6 +180,7 @@ export async function syncNow(manual = false) {
         if (entry.operation === 'delete') {
           await dbDeleteMood(entry.entityId);
         } else if (entry.data) {
+          if (!isValidMood(entry.data)) continue;
           const localMood = localMoodsMap.get(entry.entityId);
           if (!localMood || entry.timestamp > localMood.timestamp) {
             await putMood(entry.data);
