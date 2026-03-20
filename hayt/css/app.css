@@ -403,6 +403,12 @@ body {
   display: block;
 }
 
+/* Mood Insights */
+.insights-section { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+.insight-card { display: flex; align-items: center; gap: 12px; background: var(--bg-card); border-radius: var(--radius); padding: 14px 16px; }
+.insight-icon { flex-shrink: 0; display: flex; width: 28px; height: 28px; align-items: center; justify-content: center; color: var(--accent); }
+.insight-text { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.4; }
+
 /* FAB */
 .fab {
   position: fixed;

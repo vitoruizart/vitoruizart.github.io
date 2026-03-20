@@ -3,6 +3,7 @@ import { formatMonthYear, toDateStr } from '../lib/date-utils.js';
 import { renderCalendarGrid } from '../components/calendar-grid.js';
 import { renderTrendChart } from '../components/trend-chart.js';
 import { renderMoodBanner } from '../components/mood-banner.js';
+import { renderMoodInsights } from '../components/mood-insights.js';
 import { getAllMoods } from '../db.js';
 import * as state from '../state.js';
 
@@ -54,6 +55,7 @@ async function renderView(container) {
         <h3 class="trend-title">Últimos 30 días</h3>
         ${renderTrendChart(allMoods)}
       </div>
+      ${renderMoodInsights(allMoods)}
     </div>`;
 
   // Mount calendar grid
