@@ -97,6 +97,9 @@ export async function render(container, dateStr) {
 
   // Add mood
   container.querySelector('#day-add').addEventListener('click', () => {
+    // Close any open inline edit picker
+    const editPicker = container.querySelector('.edit-picker-inline');
+    if (editPicker) editPicker.remove();
     const picker = container.querySelector('#mood-picker');
     picker.classList.toggle('hidden');
     if (!picker.classList.contains('hidden')) {
@@ -128,11 +131,34 @@ function renderEntry(entry) {
 }
 
 function showEditPicker(container, dateStr, entryId, entry) {
-  const picker = container.querySelector('#mood-picker');
-  picker.classList.remove('hidden');
+  // Hide the add picker if open
+  container.querySelector('#mood-picker').classList.add('hidden');
+
+  // Toggle off if same entry clicked again
+  const existing = container.querySelector('.edit-picker-inline');
+  if (existing && existing.dataset.entryId === entryId) {
+    existing.remove();
+    return;
+  }
+  if (existing) existing.remove();
+
+  // Find the entry DOM element and insert picker right after it
+  const entryEl = container.querySelector(`.entry-edit[data-id="${entryId}"]`).closest('.day-entry');
+  const picker = document.createElement('div');
+  picker.className = 'edit-picker-inline';
+  picker.dataset.entryId = entryId;
+  picker.innerHTML = `
+    <div class="mood-grid mood-grid-small">
+      ${MOODS.map(m => `
+        <button class="mood-btn mood-btn-small" data-mood="${m.value}">
+          ${moodFaceSvg(m.value, 56)}
+          <span class="mood-label">${m.label}</span>
+        </button>
+      `).join('')}
+    </div>`;
+  entryEl.after(picker);
   picker.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  const title = picker.querySelector('.picker-title');
-  title.textContent = 'Cambiar estado de ánimo';
+
   picker.querySelectorAll('.mood-btn').forEach(mbtn => {
     mbtn.onclick = () => editMood(container, dateStr, entryId, entry, parseInt(mbtn.dataset.mood, 10));
   });

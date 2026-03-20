@@ -10,88 +10,60 @@ vi.stubGlobal('localStorage', {
 const { moodFaceSvg, moodFaceSvgSmall } = await import('../../js/components/mood-faces.js');
 
 describe('moodFaceSvg', () => {
-  it('returns SVG string', () => {
-    const svg = moodFaceSvg(3);
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
+  it('returns an img tag', () => {
+    const html = moodFaceSvg(3);
+    expect(html).toContain('<img');
+    expect(html).toContain('src=');
   });
 
-  it('uses correct color for mood 5', () => {
-    const svg = moodFaceSvg(5);
-    expect(svg).toContain('#F39C12');
-  });
-
-  it('uses correct aria-label', () => {
-    const svg = moodFaceSvg(5);
-    expect(svg).toContain('aria-label="Feliz"');
-  });
-
-  it('defaults to size 100', () => {
-    const svg = moodFaceSvg(3);
-    expect(svg).toContain('width="100"');
-    expect(svg).toContain('height="100"');
-  });
-
-  it('respects custom size', () => {
-    const svg = moodFaceSvg(3, 50);
-    expect(svg).toContain('width="50"');
-    expect(svg).toContain('height="50"');
-  });
-
-  it('uses mood 3 face for unknown value', () => {
-    const known = moodFaceSvg(3);
-    const unknown = moodFaceSvg(99);
-    // Both should use the neutral face path (line element for mood 3)
-    expect(known).toContain('<line');
-    expect(unknown).toContain('<line');
-  });
-
-  it('contains outer circle element', () => {
-    const svg = moodFaceSvg(1);
-    expect(svg).toContain('cx="50" cy="50" r="46"');
-  });
-
-  it('outer circle has solid fill', () => {
-    const svg = moodFaceSvg(3);
-    expect(svg).toContain('fill="currentColor"');
-    expect(svg).not.toContain('fill="none" stroke="currentColor" stroke-width="3"');
-  });
-
-  it('face features use white color', () => {
+  it('references correct icon file per mood', () => {
     for (const mood of [1, 2, 3, 4, 5]) {
-      const svg = moodFaceSvg(mood);
-      expect(svg).toContain('#fff');
+      const html = moodFaceSvg(mood);
+      expect(html).toContain(`mood-${mood}.png`);
     }
   });
 
-  it('mood 5 has heart eyes and open grin', () => {
-    const svg = moodFaceSvg(5);
-    // Heart-shaped eyes (filled cubic bezier paths)
-    expect(svg).toContain('C35 27');
-    // Open grin with dark mouth interior
-    expect(svg).toContain('fill="#000"');
+  it('uses correct alt text from mood label', () => {
+    expect(moodFaceSvg(5)).toContain('alt="Feliz"');
+    expect(moodFaceSvg(4)).toContain('alt="Contenta"');
+    expect(moodFaceSvg(3)).toContain('alt="Ni fu ni fa"');
+    expect(moodFaceSvg(2)).toContain('alt="Triste"');
+    expect(moodFaceSvg(1)).toContain('alt="Hecha polvo"');
   });
 
-  it('mood 1 has tear streams and closed arc eyes', () => {
-    const svg = moodFaceSvg(1);
-    // Wide tear streams (rounded rectangles)
-    expect(svg).toContain('<rect');
-    expect(svg).toContain('opacity="0.3"');
-    // Closed arc eyes (stroke paths)
-    expect(svg).toContain('<path');
-    expect(svg).toContain('stroke-linecap="round"');
+  it('defaults to size 100', () => {
+    const html = moodFaceSvg(3);
+    expect(html).toContain('width="100"');
+    expect(html).toContain('height="100"');
+  });
+
+  it('respects custom size', () => {
+    const html = moodFaceSvg(3, 50);
+    expect(html).toContain('width="50"');
+    expect(html).toContain('height="50"');
+  });
+
+  it('falls back to mood 3 icon for unknown value', () => {
+    const unknown = moodFaceSvg(99);
+    expect(unknown).toContain('mood-3.png');
+    expect(unknown).toContain('alt="Ni fu ni fa"');
+  });
+
+  it('includes draggable="false"', () => {
+    const html = moodFaceSvg(3);
+    expect(html).toContain('draggable="false"');
   });
 });
 
 describe('moodFaceSvgSmall', () => {
   it('defaults to size 28', () => {
-    const svg = moodFaceSvgSmall(4);
-    expect(svg).toContain('width="28"');
-    expect(svg).toContain('height="28"');
+    const html = moodFaceSvgSmall(4);
+    expect(html).toContain('width="28"');
+    expect(html).toContain('height="28"');
   });
 
   it('respects custom size', () => {
-    const svg = moodFaceSvgSmall(4, 24);
-    expect(svg).toContain('width="24"');
+    const html = moodFaceSvgSmall(4, 24);
+    expect(html).toContain('width="24"');
   });
 });

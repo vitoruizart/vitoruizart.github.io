@@ -429,6 +429,10 @@ body {
   font-size: 15px;
 }
 
+.edit-picker-inline {
+  padding: 8px 0;
+}
+
 .day-actions {
   text-align: center;
   margin-bottom: 16px;
@@ -539,6 +543,14 @@ body {
 .settings-version {
   font-size: 12px;
   opacity: 0.4;
+}
+
+.settings-attribution {
+  font-size: 11px;
+  opacity: 0.4;
+}
+.settings-attribution a {
+  color: inherit;
 }
 
 /* Settings tabs */

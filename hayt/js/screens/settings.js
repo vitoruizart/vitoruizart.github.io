@@ -41,6 +41,7 @@ export function render(container) {
           <h3 class="section-title">Información</h3>
           <p class="settings-info">Los datos se guardan localmente y se sincronizan encriptados a tu repositorio de GitHub.</p>
           <p class="settings-info settings-version">hayt v${escapeAttr(APP_VERSION)}</p>
+          <p class="settings-info settings-attribution">Mood icons by <a href="https://www.flaticon.com/authors/justicon" target="_blank" rel="noopener">justicon</a> — <a href="https://www.flaticon.com/" target="_blank" rel="noopener">Flaticon</a></p>
         </div>
       </div>
 

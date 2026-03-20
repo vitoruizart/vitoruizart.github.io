@@ -63,11 +63,11 @@ describe('renderCalendarGrid', () => {
     const el = renderCalendarGrid(2025, 2, moodsByDate, () => {});
     const cell = el.querySelector('[data-date="2025-03-10"]');
     expect(cell.classList.contains('cal-has-mood')).toBe(true);
-    expect(cell.innerHTML).toContain('svg');
+    expect(cell.innerHTML).toContain('<img');
   });
 
   it('averages mood values', () => {
-    // mood [2, 4] → avg 3 → mood 3 face (neutral, uses line element)
+    // mood [2, 4] → avg 3 → mood 3 face (neutral)
     const moodsByDate = new Map([
       ['2025-03-10', [{ mood: 2 }, { mood: 4 }]],
     ]);
