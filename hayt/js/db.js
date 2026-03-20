@@ -2,7 +2,21 @@
 // Stores: moods, changelog, meta
 
 const DB_NAME = 'hayt';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
+
+const MIGRATIONS = {
+  // v0 → v1: initial schema
+  1: (db) => {
+    const moods = db.createObjectStore('moods', { keyPath: 'id' });
+    moods.createIndex('date', 'date', { unique: false });
+    moods.createIndex('timestamp', 'timestamp', { unique: false });
+    const cl = db.createObjectStore('changelog', { keyPath: 'id' });
+    cl.createIndex('timestamp', 'timestamp', { unique: false });
+    db.createObjectStore('meta', { keyPath: 'key' });
+  },
+  // v1 → v2: placeholder for future schema changes (e.g., note index)
+  2: () => {},
+};
 
 let dbPromise = null;
 
@@ -12,17 +26,14 @@ function open() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = (e) => {
       const db = e.target.result;
-      if (!db.objectStoreNames.contains('moods')) {
-        const store = db.createObjectStore('moods', { keyPath: 'id' });
-        store.createIndex('date', 'date', { unique: false });
-        store.createIndex('timestamp', 'timestamp', { unique: false });
-      }
-      if (!db.objectStoreNames.contains('changelog')) {
-        const cl = db.createObjectStore('changelog', { keyPath: 'id' });
-        cl.createIndex('timestamp', 'timestamp', { unique: false });
-      }
-      if (!db.objectStoreNames.contains('meta')) {
-        db.createObjectStore('meta', { keyPath: 'key' });
+      const tx = e.target.transaction;
+      for (let v = e.oldVersion + 1; v <= e.newVersion; v++) {
+        const migration = MIGRATIONS[v];
+        if (!migration) {
+          reject(new Error(`No migration for version ${v}`));
+          return;
+        }
+        migration(db, tx);
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -30,6 +41,9 @@ function open() {
   });
   return dbPromise;
 }
+
+// Exposed for testing
+export { DB_VERSION, MIGRATIONS };
 
 function tx(storeNames, mode = 'readonly') {
   return open().then(db => {

@@ -7,6 +7,7 @@ const mockPutFile = vi.fn();
 vi.mock('../js/github-api.js', () => ({
   getFile: (...args) => mockGetFile(...args),
   putFile: (...args) => mockPutFile(...args),
+  getRateLimitRemaining: () => Infinity,
   RateLimitError: class extends Error {
     constructor(resetAtMs) {
       super('rate limit');
@@ -257,6 +258,130 @@ describe('syncNow integration', () => {
     expect(changelogIdx).toBeGreaterThan(-1);
     expect(snapshotIdx).toBeGreaterThan(-1);
     expect(changelogIdx).toBeLessThan(snapshotIdx);
+  });
+
+  it('preserves local data when compaction snapshot write fails', async () => {
+    setCredentials();
+
+    const salt = crypto.generateSalt();
+    const key = await crypto.deriveKey('test-pass', salt);
+    const verifier = await crypto.createVerifier(key);
+
+    // Seed local mood
+    await db.putMood({ id: 'local-mood-1', mood: 5, date: '2025-03-20', timestamp: 50000 });
+
+    const snapshot = {
+      syncVersion: 1,
+      encryptionSalt: salt,
+      encryptionVerifier: verifier,
+      moods: [],
+    };
+
+    // 30+ remote entries to trigger compaction
+    const remoteEntries = Array.from({ length: 30 }, (_, i) => ({
+      id: `comp-ch-${i}`,
+      deviceId: 'other-device',
+      entityId: `comp-mood-${i}`,
+      timestamp: 1000 + i,
+      operation: 'upsert',
+      data: { id: `comp-mood-${i}`, mood: 3, date: '2025-03-10', timestamp: 1000 + i },
+    }));
+
+    mockGetFile.mockImplementation((_pat, _repo, path) => {
+      if (path.includes('snapshot')) {
+        return { data: JSON.stringify(snapshot), sha: 'snap-sha' };
+      }
+      if (path.includes('changelog')) {
+        return { data: JSON.stringify(remoteEntries), sha: 'cl-sha' };
+      }
+      return null;
+    });
+
+    // Compaction: changelog clear succeeds, snapshot write fails
+    let putCount = 0;
+    mockPutFile.mockImplementation((_pat, _repo, path) => {
+      putCount++;
+      if (path.includes('snapshot')) {
+        throw new Error('Network error');
+      }
+      return 'new-sha';
+    });
+
+    await syncNow();
+
+    // Local mood should still be intact despite compaction failure
+    const localMood = await db.getMood('local-mood-1');
+    expect(localMood).toBeDefined();
+    expect(localMood.mood).toBe(5);
+
+    // Sync should still complete (compaction is non-critical)
+    expect(stateValues.syncStatus).toBe('idle');
+  });
+
+  it('preserves changelog entries when push fails after successful pull', async () => {
+    setCredentials();
+
+    const salt = crypto.generateSalt();
+    const key = await crypto.deriveKey('test-pass', salt);
+    const verifier = await crypto.createVerifier(key);
+
+    // Remote has a foreign mood
+    const foreignEntity = { id: 'pulled-mood', mood: 2, date: '2025-03-18', timestamp: 4000 };
+    const encEntity = await crypto.encryptEntity(key, foreignEntity);
+
+    const snapshot = {
+      syncVersion: 1,
+      encryptionSalt: salt,
+      encryptionVerifier: verifier,
+      moods: [],
+    };
+
+    const changelog = [{
+      id: 'foreign-ch',
+      deviceId: 'other-device',
+      entityId: 'pulled-mood',
+      timestamp: 4000,
+      operation: 'upsert',
+      data: encEntity,
+    }];
+
+    // Local pending change
+    await db.addChangeEntry({
+      id: 'pending-local',
+      deviceId: 'my-device',
+      entityId: 'my-mood',
+      timestamp: 8000,
+      operation: 'upsert',
+      data: { id: 'my-mood', mood: 4, date: '2025-03-19', timestamp: 8000 },
+    });
+
+    mockGetFile.mockImplementation((_pat, _repo, path) => {
+      if (path.includes('snapshot')) {
+        return { data: JSON.stringify(snapshot), sha: 'snap-sha' };
+      }
+      if (path.includes('changelog')) {
+        return { data: JSON.stringify(changelog), sha: 'cl-sha' };
+      }
+      return null;
+    });
+
+    // putFile always fails (network error during push)
+    mockPutFile.mockRejectedValue(new Error('Network error'));
+
+    await syncNow();
+
+    // Pull should have succeeded — foreign mood is in local DB
+    const pulledMood = await db.getMood('pulled-mood');
+    expect(pulledMood).toBeDefined();
+    expect(pulledMood.mood).toBe(2);
+
+    // Local changelog should be preserved for retry (push failed, so entries not cleared)
+    const entries = await db.getAllChangeEntries();
+    const pendingIds = entries.map(e => e.id);
+    expect(pendingIds).toContain('pending-local');
+
+    // Status should be error
+    expect(stateValues.syncStatus).toBe('error');
   });
 
   it('sets error on wrong password', async () => {

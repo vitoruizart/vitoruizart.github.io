@@ -1,6 +1,7 @@
 // Month calendar grid renderer
 import { getDaysInMonth, getFirstDayOfWeek, toDateStr } from '../lib/date-utils.js';
 import { moodFaceSvgSmall } from './mood-faces.js';
+import { getMood } from '../lib/constants.js';
 
 // Greyish blue (worst) → pinkish red (best)
 const MOOD_BG = {
@@ -12,6 +13,8 @@ const MOOD_BG = {
 };
 
 const DAY_NAMES = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const MONTH_NAMES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
 // moodsByDate: Map<dateStr, moodEntry[]>
 export function renderCalendarGrid(year, month, moodsByDate, onDayClick) {
@@ -19,18 +22,29 @@ export function renderCalendarGrid(year, month, moodsByDate, onDayClick) {
   const firstDay = getFirstDayOfWeek(year, month);
   const todayStr = toDateStr();
 
-  let html = '<div class="cal-grid">';
+  let html = '<div class="cal-grid" role="grid">';
 
   // Header row
-  html += DAY_NAMES.map(d => `<div class="cal-header">${d}</div>`).join('');
+  html += '<div role="row">';
+  html += DAY_NAMES.map(d => `<div class="cal-header" role="columnheader">${d}</div>`).join('');
+  html += '</div>';
+
+  // Build rows of 7 cells
+  let cellCount = 0;
+  html += '<div role="row">';
 
   // Empty cells before first day
   for (let i = 0; i < firstDay; i++) {
-    html += '<div class="cal-cell cal-empty"></div>';
+    html += '<div class="cal-cell cal-empty" role="gridcell"></div>';
+    cellCount++;
   }
 
   // Day cells
   for (let d = 1; d <= days; d++) {
+    if (cellCount > 0 && cellCount % 7 === 0) {
+      html += '</div><div role="row">';
+    }
+
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const entries = moodsByDate.get(dateStr) ?? [];
     const isToday = dateStr === todayStr;
@@ -45,15 +59,23 @@ export function renderCalendarGrid(year, month, moodsByDate, onDayClick) {
     const countBadge = entries.length > 1 ? `<span class="cal-count">${entries.length}</span>` : '';
     const bgStyle = moodValue !== null ? `--mood-bg:${MOOD_BG[moodValue]}` : '';
 
+    // ARIA label: "15 de marzo, ánimo 4 (Contenta)"
+    let ariaLabel = `${d} de ${MONTH_NAMES[month]}`;
+    if (moodValue !== null) {
+      ariaLabel += `, ánimo ${moodValue} (${getMood(moodValue).label})`;
+    }
+
     html += `<button class="cal-cell${isToday ? ' cal-today' : ''}${moodValue !== null ? ' cal-has-mood' : ''}"
-      data-date="${dateStr}" style="${bgStyle}">
+      data-date="${dateStr}" style="${bgStyle}" role="gridcell" aria-label="${ariaLabel}"${isToday ? ' aria-current="date"' : ''}>
       <span class="cal-day-num">${d}</span>
       ${face ? `<span class="cal-face">${face}</span>` : ''}
       ${countBadge}
     </button>`;
+    cellCount++;
   }
 
-  html += '</div>';
+  html += '</div>'; // close last row
+  html += '</div>'; // close grid
 
   const el = document.createElement('div');
   el.innerHTML = html;

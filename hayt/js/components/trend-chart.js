@@ -57,7 +57,7 @@ export function renderTrendChart(allMoods) {
     <text x="${W - PAD_X}" y="${H - 2}" text-anchor="end" fill="rgba(255,255,255,0.4)" font-size="8">${todayStr.slice(5)}</text>`;
 
   return `<div class="trend-chart">
-    <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet">
+    <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Tendencia de ánimo de los últimos 30 días">
       ${yLabels}${path}${dots}${xLabels}
     </svg>
   </div>`;

@@ -123,11 +123,15 @@ export async function render(container, dateStr) {
 
 function renderEntry(entry) {
   const mood = getMoodDef(entry.mood);
+  const noteHtml = entry.note
+    ? `<span class="entry-note">${escapeHtml(entry.note)}</span>`
+    : '';
   return `<div class="day-entry" style="border-left-color:${mood.color}">
     <div class="entry-face">${moodFaceSvg(entry.mood, 40)}</div>
     <div class="entry-info">
       <span class="entry-label">${mood.label}</span>
       <span class="entry-time">${entry.time}</span>
+      ${noteHtml}
     </div>
     <div class="entry-actions">
       <button class="entry-edit" data-id="${entry.id}" aria-label="Editar" title="Editar">
@@ -138,6 +142,10 @@ function renderEntry(entry) {
       </button>
     </div>
   </div>`;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function showEditPicker(container, dateStr, entryId, entry) {

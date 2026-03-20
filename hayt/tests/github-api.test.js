@@ -68,9 +68,24 @@ describe('getFile', () => {
     expect(result).toBeNull();
   });
 
-  it('throws on non-404 error', async () => {
-    mockFetch(makeResponse(500, {}));
+  it('retries once on 5xx then throws if still failing', async () => {
+    const mockFetchFn = vi.fn(() => Promise.resolve(makeResponse(500, {})));
+    vi.stubGlobal('fetch', mockFetchFn);
     await expect(getFile(PAT, REPO, 'test.json')).rejects.toThrow('GitHub API error: 500');
+    expect(mockFetchFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries once on 5xx and succeeds on second attempt', async () => {
+    const content = '{"ok":true}';
+    let callCount = 0;
+    vi.stubGlobal('fetch', vi.fn(() => {
+      callCount++;
+      if (callCount === 1) return Promise.resolve(makeResponse(502, {}));
+      return Promise.resolve(makeResponse(200, { content: utf8ToBase64(content), sha: 'abc' }));
+    }));
+    const result = await getFile(PAT, REPO, 'test.json');
+    expect(result.data).toBe(content);
+    expect(callCount).toBe(2);
   });
 
   it('throws on malformed response (missing content)', async () => {
@@ -105,9 +120,11 @@ describe('putFile', () => {
     await expect(putFile(PAT, REPO, 'test.json', '{}', 'old-sha')).rejects.toThrow('CONFLICT');
   });
 
-  it('throws on other errors', async () => {
-    mockFetch(makeResponse(500, {}));
+  it('throws on other errors after retry', async () => {
+    const mockFetchFn = vi.fn(() => Promise.resolve(makeResponse(500, {})));
+    vi.stubGlobal('fetch', mockFetchFn);
     await expect(putFile(PAT, REPO, 'test.json', '{}', 'old-sha')).rejects.toThrow('GitHub API error: 500');
+    expect(mockFetchFn).toHaveBeenCalledTimes(2); // original + 1 retry
   });
 
   it('sends correct body structure', async () => {

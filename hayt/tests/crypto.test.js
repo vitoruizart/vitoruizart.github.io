@@ -107,6 +107,17 @@ describe('encryptEntity / decryptEntity', () => {
     expect(decrypted).toEqual(entity);
   });
 
+  it('encrypts and decrypts note field alongside mood', async () => {
+    const { key } = await makeKey();
+    const entity = { id: 'n1', mood: 3, note: 'Feeling okay today', date: '2025-03-20', timestamp: 2000 };
+    const encrypted = await encryptEntity(key, entity);
+    expect(encrypted).not.toHaveProperty('mood');
+    expect(encrypted).not.toHaveProperty('note');
+    expect(encrypted).toHaveProperty('_enc');
+    const decrypted = await decryptEntity(key, encrypted);
+    expect(decrypted).toEqual(entity);
+  });
+
   it('decryptEntity on entity without _enc returns unchanged', async () => {
     const { key } = await makeKey();
     const entity = { id: 'abc', mood: 3, date: '2025-01-01' };

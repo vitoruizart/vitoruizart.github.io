@@ -68,14 +68,28 @@ async function renderView(container) {
   container.appendChild(fab);
 
   // Nav buttons
-  container.querySelector('#cal-prev').addEventListener('click', () => {
-    currentMonth--;
-    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-    renderView(container);
+  container.querySelector('#cal-prev').addEventListener('click', () => navigateMonth(container, -1));
+  container.querySelector('#cal-next').addEventListener('click', () => navigateMonth(container, 1));
+
+  // Swipe navigation
+  let touchStartX = null;
+  const calView = container.querySelector('.calendar-view');
+  calView.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+  calView.addEventListener('touchend', (e) => {
+    if (touchStartX === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX;
+    touchStartX = null;
+    if (Math.abs(deltaX) > 50) {
+      navigateMonth(container, deltaX > 0 ? -1 : 1);
+    }
   });
-  container.querySelector('#cal-next').addEventListener('click', () => {
-    currentMonth++;
-    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-    renderView(container);
-  });
+}
+
+function navigateMonth(container, direction) {
+  currentMonth += direction;
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  renderView(container);
 }

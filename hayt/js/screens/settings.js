@@ -3,6 +3,7 @@ import { testConnection } from '../github-api.js';
 import { clearEncryptionKey } from '../crypto.js';
 import { toast } from '../components/toast.js';
 import { startSync, stopSync, syncNow } from '../sync.js';
+import { getAllMoods } from '../db.js';
 import { DEFAULT_PROMPT_HOURS, APP_VERSION } from '../lib/constants.js';
 import { escapeAttr, isValidPat, isValidRepo } from '../lib/validators.js';
 import { checkForUpdate } from '../lib/update-checker.js';
@@ -24,18 +25,23 @@ export function render(container) {
         <h2 class="settings-title">Ajustes</h2>
       </div>
 
-      <div class="settings-tabs">
-        <button class="settings-tab-btn active" data-tab="general">General</button>
-        <button class="settings-tab-btn" data-tab="sync">Sincronización</button>
+      <div class="settings-tabs" role="tablist">
+        <button class="settings-tab-btn active" data-tab="general" role="tab" aria-selected="true" aria-controls="tab-general" id="tabbtn-general">General</button>
+        <button class="settings-tab-btn" data-tab="sync" role="tab" aria-selected="false" aria-controls="tab-sync" id="tabbtn-sync">Sincronización</button>
       </div>
 
-      <div class="settings-tab" id="tab-general">
+      <div class="settings-tab" id="tab-general" role="tabpanel" aria-labelledby="tabbtn-general">
         <div class="settings-section">
           <h3 class="section-title">Frecuencia de registro</h3>
           <label class="field-label" for="s-prompt-freq">Preguntar cada</label>
           <select id="s-prompt-freq" class="field-input">
             ${PROMPT_OPTIONS.map(h => `<option value="${h}"${String(h) === promptHours ? ' selected' : ''}>${h} horas</option>`).join('')}
           </select>
+        </div>
+
+        <div class="settings-section">
+          <h3 class="section-title">Datos</h3>
+          <button class="btn-secondary" id="s-export" style="width:100%">Exportar datos (CSV)</button>
         </div>
 
         <div class="settings-section">
@@ -46,21 +52,31 @@ export function render(container) {
         </div>
       </div>
 
-      <div class="settings-tab hidden" id="tab-sync">
+      <div class="settings-tab hidden" id="tab-sync" role="tabpanel" aria-labelledby="tabbtn-sync">
         <div class="settings-section">
           <h3 class="section-title">GitHub</h3>
 
           <label class="field-label" for="s-pat">GitHub Token (PAT)</label>
-          <input type="password" id="s-pat" class="field-input" value="${escapeAttr(pat)}"
-            placeholder="ghp_..." autocomplete="off" spellcheck="false">
+          <div class="field-password-wrap">
+            <input type="password" id="s-pat" class="field-input" value="${escapeAttr(pat)}"
+              placeholder="ghp_..." autocomplete="off" spellcheck="false">
+            <button type="button" class="field-toggle-vis" data-target="s-pat" aria-label="Mostrar/ocultar token">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
 
           <label class="field-label" for="s-repo">Repositorio</label>
           <input type="text" id="s-repo" class="field-input" value="${escapeAttr(repo)}"
             placeholder="usuario/repositorio" autocomplete="off" spellcheck="false">
 
           <label class="field-label" for="s-password">Contraseña de encriptación</label>
-          <input type="password" id="s-password" class="field-input" value="${escapeAttr(password)}"
-            placeholder="Contraseña segura" autocomplete="off">
+          <div class="field-password-wrap">
+            <input type="password" id="s-password" class="field-input" value="${escapeAttr(password)}"
+              placeholder="Contraseña segura" autocomplete="off">
+            <button type="button" class="field-toggle-vis" data-target="s-password" aria-label="Mostrar/ocultar contraseña">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
 
           <div class="settings-actions">
             <button class="btn-secondary" id="s-test">Probar conexión</button>
@@ -74,11 +90,23 @@ export function render(container) {
       </div>
     </div>`;
 
+  // Password visibility toggles
+  container.querySelectorAll('.field-toggle-vis').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = container.querySelector(`#${btn.dataset.target}`);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+  });
+
   // Tab switching
   container.querySelectorAll('.settings-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      container.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+      container.querySelectorAll('.settings-tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
       btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
       container.querySelectorAll('.settings-tab').forEach(t => t.classList.add('hidden'));
       container.querySelector(`#tab-${btn.dataset.tab}`).classList.remove('hidden');
     });
@@ -157,5 +185,33 @@ export function render(container) {
   container.querySelector('#s-sync-now').addEventListener('click', () => {
     syncNow(true);
     checkForUpdate();
+  });
+
+  // Export CSV
+  container.querySelector('#s-export').addEventListener('click', async () => {
+    try {
+      const moods = await getAllMoods();
+      if (moods.length === 0) {
+        toast('No hay datos para exportar', 'info');
+        return;
+      }
+      moods.sort((a, b) => a.timestamp - b.timestamp);
+      const csvEscape = (s) => s ? `"${String(s).replace(/"/g, '""')}"` : '';
+      const rows = ['date,time,mood,note'];
+      for (const m of moods) {
+        rows.push(`${m.date},${m.time ?? ''},${m.mood},${csvEscape(m.note ?? '')}`);
+      }
+      const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `hayt-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Exportado', 'success', 1500);
+    } catch (err) {
+      console.error('Export failed:', err);
+      toast('Error al exportar', 'error');
+    }
   });
 }

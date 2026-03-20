@@ -18,6 +18,15 @@
   padding: 0;
 }
 
+/* Focus indicators for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 html, body {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -126,6 +135,12 @@ body {
   background: #F39C12;
 }
 
+.sync-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  align-self: center;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
@@ -188,6 +203,28 @@ body {
   opacity: 0.85;
   text-align: center;
   word-break: break-word;
+}
+
+/* Note field on mood prompt */
+.note-section {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.note-section.hidden { display: none; }
+.note-input {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+.note-save-btn {
+  align-self: flex-end;
+  flex: none;
+  width: auto;
+  padding: 10px 32px;
 }
 
 .mood-grid-small {
@@ -425,6 +462,13 @@ body {
   font-size: 13px;
   color: var(--text-muted);
 }
+.entry-note {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.4;
+  margin-top: 2px;
+}
 
 .entry-actions {
   display: flex;
@@ -445,7 +489,7 @@ body {
   justify-content: center;
 }
 .entry-edit:active, .entry-delete:active { opacity: 0.5; }
-.entry-edit:hover { color: var(--text-primary); }
+.entry-edit:hover { color: var(--text); }
 .entry-delete:hover { color: #e74c3c; }
 .entry-delete.confirm {
   background: #e74c3c;
@@ -455,6 +499,22 @@ body {
   padding: 6px 12px;
   font-size: 13px;
   font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+.entry-delete.confirm::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: rgba(255,255,255,0.5);
+  animation: delete-countdown 3s linear forwards;
+}
+@keyframes delete-countdown {
+  from { width: 100%; }
+  to { width: 0%; }
 }
 
 .day-empty {
@@ -535,6 +595,26 @@ body {
   font-size: 15px;
   outline: none;
 }
+.field-password-wrap {
+  position: relative;
+}
+.field-password-wrap .field-input {
+  padding-right: 44px;
+}
+.field-toggle-vis {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.field-toggle-vis:active { opacity: 0.5; }
 .field-input:focus {
   border-color: var(--accent);
 }

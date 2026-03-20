@@ -5,7 +5,7 @@ const PBKDF2_ITERATIONS = 600_000;
 const VERIFIER_PLAINTEXT = 'hayt-encryption-check';
 
 const SENSITIVE_FIELDS = {
-  mood: ['mood'],
+  mood: ['mood', 'note'],
 };
 
 // --- Key cache ---

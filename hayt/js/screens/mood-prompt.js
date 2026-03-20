@@ -13,6 +13,8 @@ export async function shouldShowPrompt() {
   return recent.length === 0;
 }
 
+let autoSaveTimer = null;
+
 export function render(container) {
   container.innerHTML = `
     <div class="mood-prompt">
@@ -25,14 +27,50 @@ export function render(container) {
           </button>
         `).join('')}
       </div>
+      <div class="note-section hidden" id="note-section">
+        <textarea class="field-input note-input" id="mood-note"
+          placeholder="¿Qué está pasando?" rows="3" maxlength="500"></textarea>
+        <button class="btn-primary note-save-btn" id="note-save">Guardar</button>
+      </div>
     </div>`;
 
   container.querySelectorAll('.mood-btn').forEach(btn => {
-    btn.addEventListener('click', () => recordMood(parseInt(btn.dataset.mood, 10)));
+    btn.addEventListener('click', () => {
+      const value = parseInt(btn.dataset.mood, 10);
+      showNoteField(container, value);
+    });
   });
 }
 
-async function recordMood(value) {
+function showNoteField(container, moodValue) {
+  // Highlight selected mood button
+  container.querySelectorAll('.mood-btn').forEach(b => {
+    b.style.opacity = parseInt(b.dataset.mood, 10) === moodValue ? '1' : '0.4';
+    b.style.pointerEvents = 'none';
+  });
+
+  const noteSection = container.querySelector('#note-section');
+  noteSection.classList.remove('hidden');
+  noteSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Auto-save after 2s if user doesn't interact with the note field
+  autoSaveTimer = setTimeout(() => saveMood(moodValue, ''), 2000);
+
+  const textarea = container.querySelector('#mood-note');
+  textarea.addEventListener('input', () => {
+    if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
+  });
+
+  container.querySelector('#note-save').addEventListener('click', () => {
+    if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
+    saveMood(moodValue, textarea.value.trim());
+  });
+}
+
+async function saveMood(value, note) {
+  // Prevent double-save
+  if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
+
   const now = new Date();
   const mood = {
     id: crypto.randomUUID(),
@@ -42,6 +80,7 @@ async function recordMood(value) {
     mood: value,
     deviceId: getDeviceId(),
   };
+  if (note) mood.note = note;
 
   try {
     await putMood(mood);

@@ -4,6 +4,7 @@ import {
   putMood, getMood, deleteMood, getMoodsByDate, getAllMoods, getRecentMoods,
   addChangeEntry, getAllChangeEntries, clearChangeEntries, deleteChangeEntries,
   getMeta, setMeta,
+  DB_VERSION, MIGRATIONS,
 } from '../js/db.js';
 
 // Each test needs a fresh DB. fake-indexeddb/auto replaces globalThis.indexedDB
@@ -102,6 +103,35 @@ describe('changelog', () => {
     expect(ids).toContain('c-del-2');
     // Cleanup
     await clearChangeEntries();
+  });
+});
+
+describe('migrations', () => {
+  it('DB_VERSION matches highest migration key', () => {
+    const maxVersion = Math.max(...Object.keys(MIGRATIONS).map(Number));
+    expect(DB_VERSION).toBe(maxVersion);
+  });
+
+  it('has a migration for every version from 1 to DB_VERSION', () => {
+    for (let v = 1; v <= DB_VERSION; v++) {
+      expect(MIGRATIONS[v]).toBeDefined();
+      expect(typeof MIGRATIONS[v]).toBe('function');
+    }
+  });
+
+  it('fresh install creates all expected stores (via CRUD operations)', async () => {
+    // The DB was opened fresh by earlier tests — verify stores work
+    await putMood({ id: 'mig-test', mood: 3, date: '2025-01-01', timestamp: 1 });
+    const result = await getMood('mig-test');
+    expect(result).toBeDefined();
+
+    await addChangeEntry({ id: 'mig-cl', timestamp: 1, entityId: 'x', operation: 'put' });
+    const entries = await getAllChangeEntries();
+    expect(entries.length).toBeGreaterThan(0);
+
+    await setMeta('mig-meta', { val: 1 });
+    const meta = await getMeta('mig-meta');
+    expect(meta.val).toBe(1);
   });
 });
 

@@ -9,7 +9,7 @@ export class RateLimitError extends Error {
   }
 }
 
-async function githubFetch(pat, repo, path, options, signal, keepalive) {
+async function githubFetch(pat, repo, path, options, signal, keepalive, _retried) {
   const url = `https://api.github.com/repos/${repo}/contents/${path}`;
   const fetchSignal = keepalive
     ? undefined
@@ -38,7 +38,26 @@ async function githubFetch(pat, repo, path, options, signal, keepalive) {
     }
   }
 
+  // Retry once on transient server errors
+  if (resp.status >= 500 && !_retried) {
+    await new Promise(r => setTimeout(r, 1000));
+    return githubFetch(pat, repo, path, options, signal, keepalive, true);
+  }
+
+  // Track rate limit remaining
+  const rlRemaining = resp.headers.get('X-RateLimit-Remaining');
+  if (rlRemaining !== null) {
+    _rateLimitRemaining = parseInt(rlRemaining, 10);
+  }
+
   return resp;
+}
+
+// --- Rate limit tracking ---
+let _rateLimitRemaining = Infinity;
+
+export function getRateLimitRemaining() {
+  return _rateLimitRemaining;
 }
 
 function utf8ToBase64(str) {

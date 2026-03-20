@@ -1,5 +1,15 @@
 // Top navigation bar — gear icon + sync indicator
 import * as state from '../state.js';
+import { toast } from './toast.js';
+
+function formatRelativeTime(ms) {
+  if (!ms) return null;
+  const diff = Math.floor((Date.now() - ms) / 1000);
+  if (diff < 60) return 'hace un momento';
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `hace ${Math.floor(diff / 3600)}h`;
+  return `hace ${Math.floor(diff / 86400)}d`;
+}
 
 export function renderNav(container) {
   container.innerHTML = `
@@ -16,6 +26,7 @@ export function renderNav(container) {
           </svg>
           <span class="sync-dot" id="sync-dot"></span>
         </button>
+        <span class="sync-time" id="sync-time"></span>
         <button class="nav-btn" id="nav-settings" aria-label="Settings" title="Ajustes">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <circle cx="12" cy="12" r="3"/>
@@ -30,6 +41,11 @@ export function renderNav(container) {
   });
 
   container.querySelector('#nav-sync').addEventListener('click', () => {
+    const currentStatus = state.get('syncStatus');
+    if (currentStatus === 'error') {
+      const lastError = state.get('syncError');
+      if (lastError) toast(lastError, 'error');
+    }
     const { syncNow } = window._haytSync ?? {};
     if (syncNow) syncNow(true);
   });
@@ -42,5 +58,13 @@ export function renderNav(container) {
     if (status === 'syncing') dot.classList.add('sync-active');
     else if (status === 'error') dot.classList.add('sync-error');
     else if (status === 'pending') dot.classList.add('sync-pending');
+  });
+
+  // Last synced timestamp
+  state.on('lastSyncAt', ts => {
+    const el = document.getElementById('sync-time');
+    if (!el) return;
+    const text = formatRelativeTime(ts);
+    el.textContent = text ?? '';
   });
 }

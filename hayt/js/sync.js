@@ -1,7 +1,7 @@
 // Sync engine — snapshot + changelog, compaction, keepalive flush
 // Ported from gtd25 sync-engine.ts + change-log.ts, simplified for single entity type
 
-import { getFile, putFile, RateLimitError } from './github-api.js';
+import { getFile, putFile, RateLimitError, getRateLimitRemaining } from './github-api.js';
 import {
   deriveKey, generateSalt, encryptEntity, decryptEntity,
   createVerifier, checkVerifier,
@@ -251,14 +251,30 @@ export async function syncNow(manual = false) {
     }
 
     // Update sync metadata
-    await setMeta('sync', { lastSyncAt: Date.now() });
+    const syncTime = Date.now();
+    await setMeta('sync', { lastSyncAt: syncTime });
+    state.set('lastSyncAt', syncTime);
     state.set('syncStatus', 'idle');
+    state.set('syncError', null);
     state.set('moodsUpdated', Date.now());
     if (manual) toast('Sincronizado', 'success', 1500);
+
+    // Warn on low rate limit
+    const remaining = getRateLimitRemaining();
+    if (remaining < 5) {
+      toast(`API: quedan ${remaining} peticiones`, 'error', 5000);
+      // Restart poll with extended interval
+      stopPoll();
+      startPoll();
+    } else if (remaining < 10) {
+      stopPoll();
+      startPoll();
+    }
 
   } catch (err) {
     console.error('Sync error:', err);
     state.set('syncStatus', 'error');
+    state.set('syncError', err.message);
     if (manual) toast(`Error: ${err.message}`, 'error');
     if (err instanceof RateLimitError) {
       const waitSec = Math.ceil((err.resetAtMs - Date.now()) / 1000);
@@ -340,7 +356,13 @@ export function startPoll() {
   stopPoll();
   pollTimer = setInterval(() => {
     if (document.visibilityState === 'visible') syncNow();
-  }, POLL_INTERVAL_MS);
+  }, getPollInterval());
+}
+
+function getPollInterval() {
+  const remaining = getRateLimitRemaining();
+  if (remaining < 10) return 5 * 60 * 1000; // 5 min when rate limit is low
+  return POLL_INTERVAL_MS;
 }
 
 export function stopPoll() {
