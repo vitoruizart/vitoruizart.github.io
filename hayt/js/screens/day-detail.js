@@ -304,54 +304,67 @@ function showInlineNoteStep(targetEl, container, dateStr, savedMood) {
     }
   };
 
+  const saveNoteAndDismiss = async (noteText) => {
+    const updated = { ...savedMood };
+    if (noteText) {
+      updated.note = noteText;
+    } else {
+      delete updated.note;
+    }
+    try {
+      await putMood(updated);
+      await addChangeEntry({
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        entityType: 'mood',
+        entityId: savedMood.id,
+        operation: 'upsert',
+        data: { ...updated },
+        deviceId: getDeviceId(),
+      });
+    } catch (err) {
+      console.error('Failed to save note:', err);
+      toast('Error al guardar nota', 'error');
+      return;
+    }
+    state.set('syncStatus', 'pending');
+    state.set('moodsUpdated', Date.now());
+    const { syncNow } = window._haytSync ?? {};
+    if (syncNow) syncNow();
+    toast(noteText ? 'Nota guardada' : 'Nota eliminada', 'success', 1500);
+    await refreshEntries(container, dateStr);
+    dismiss();
+  };
+
   const showNoteForm = (existingNote) => {
     clearInterval(countdownId);
     const actions = targetEl.querySelector('.mood-post-actions');
+    const deleteBtn = existingNote
+      ? '<button class="btn-secondary note-delete-btn" id="day-note-delete">Borrar nota</button>'
+      : '';
     actions.innerHTML = `
       <div class="note-section">
         <textarea class="field-input note-input" id="day-mood-note"
           placeholder="¿Qué está pasando?" rows="3" maxlength="500"></textarea>
-        <button class="btn-primary note-save-btn" id="day-note-save">Guardar</button>
+        <div class="note-actions">
+          <button class="btn-primary note-save-btn" id="day-note-save">Guardar</button>
+          ${deleteBtn}
+        </div>
       </div>`;
 
     const textarea = actions.querySelector('#day-mood-note');
     if (existingNote) textarea.value = existingNote;
     textarea.focus();
 
-    actions.querySelector('#day-note-save').addEventListener('click', async () => {
+    actions.querySelector('#day-note-save').addEventListener('click', () => {
       const note = textarea.value.trim();
-      if (!note) return;
-
-      const updated = { ...savedMood, note };
-      try {
-        await putMood(updated);
-        await addChangeEntry({
-          id: crypto.randomUUID(),
-          timestamp: Date.now(),
-          entityType: 'mood',
-          entityId: savedMood.id,
-          operation: 'upsert',
-          data: { ...updated },
-          deviceId: getDeviceId(),
-        });
-      } catch (err) {
-        console.error('Failed to save note:', err);
-        toast('Error al guardar nota', 'error');
-        return;
-      }
-      state.set('syncStatus', 'pending');
-      state.set('moodsUpdated', Date.now());
-      const { syncNow } = window._haytSync ?? {};
-      if (syncNow) syncNow();
-      toast('Nota guardada', 'success', 1500);
-      await refreshEntries(container, dateStr);
-      addBtn.classList.remove('hidden');
-      if (targetEl.id === 'mood-picker') {
-        targetEl.classList.add('hidden');
-      } else {
-        targetEl.remove();
-      }
+      saveNoteAndDismiss(note);
     });
+
+    const delBtn = actions.querySelector('#day-note-delete');
+    if (delBtn) {
+      delBtn.addEventListener('click', () => saveNoteAndDismiss(''));
+    }
   };
 
   targetEl.innerHTML = `
