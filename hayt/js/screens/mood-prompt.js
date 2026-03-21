@@ -98,6 +98,12 @@ async function handleMoodSelected(container, moodValue, onSaved) {
 async function handleMoodCorrection(container, savedMoodRef, newValue) {
   if (savedMoodRef.mood === newValue) return;
 
+  // Reset auto-navigate countdown on correction
+  if (container._postSaveTimer) {
+    clearInterval(container._postSaveTimer);
+    startCalendarCountdown(container);
+  }
+
   // Update highlight immediately
   container.querySelectorAll('.mood-btn').forEach(b => {
     b.style.opacity = parseInt(b.dataset.mood, 10) === newValue ? '1' : '0.4';
@@ -143,15 +149,21 @@ function showPostSave(container, savedMood) {
   area.innerHTML = `
     <p class="mood-saved-msg">Estado de ánimo registrado</p>
     <div class="mood-post-actions">
-      <button class="btn-secondary" id="post-go-calendar">Ir al Calendario</button>
+      <button class="btn-secondary" id="post-go-calendar">Ir al Calendario (5)</button>
       <button class="btn-primary" id="post-add-note">Añadir nota</button>
     </div>`;
 
-  area.querySelector('#post-go-calendar').addEventListener('click', () => {
+  const calBtn = area.querySelector('#post-go-calendar');
+  calBtn.addEventListener('click', () => {
+    clearInterval(container._postSaveTimer);
     location.hash = '#calendar';
   });
 
+  startCalendarCountdown(container);
+
   area.querySelector('#post-add-note').addEventListener('click', () => {
+    clearInterval(container._postSaveTimer);
+    calBtn.textContent = 'Ir al Calendario';
     showNoteField(area, savedMood);
   });
 }
@@ -197,4 +209,22 @@ function showNoteField(area, savedMood) {
     toast('Nota guardada', 'success', 1500);
     location.hash = '#calendar';
   });
+}
+
+function startCalendarCountdown(container) {
+  const calBtn = container.querySelector('#post-go-calendar');
+  if (!calBtn) return;
+
+  let remaining = 5;
+  calBtn.textContent = `Ir al Calendario (${remaining})`;
+
+  container._postSaveTimer = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(container._postSaveTimer);
+      location.hash = '#calendar';
+    } else {
+      calBtn.textContent = `Ir al Calendario (${remaining})`;
+    }
+  }, 1000);
 }

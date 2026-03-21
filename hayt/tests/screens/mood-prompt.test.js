@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import 'fake-indexeddb/auto';
 
 // --- Mock db ---
@@ -53,6 +53,14 @@ describe('mood-prompt screen', () => {
     location.hash = '';
   });
 
+  afterEach(() => {
+    // Clear any countdown interval left from tests
+    if (container._postSaveTimer) {
+      clearInterval(container._postSaveTimer);
+    }
+    vi.useRealTimers();
+  });
+
   it('renders 5 mood buttons', () => {
     render(container);
     const buttons = container.querySelectorAll('.mood-btn');
@@ -97,6 +105,43 @@ describe('mood-prompt screen', () => {
 
     container.querySelector('#post-go-calendar').click();
     expect(location.hash).toBe('#calendar');
+  });
+
+  it('auto-navigates to calendar after 5 seconds', async () => {
+    vi.useFakeTimers();
+    render(container);
+    container.querySelector('.mood-btn[data-mood="3"]').click();
+
+    // Flush async work (putMood/addChangeEntry promises) without advancing clock
+    await vi.advanceTimersByTimeAsync(0);
+    expect(container.querySelector('#post-go-calendar')).toBeTruthy();
+
+    // Button should show countdown
+    expect(container.querySelector('#post-go-calendar').textContent).toBe('Ir al Calendario (5)');
+
+    // Advance 3 seconds — countdown should update
+    vi.advanceTimersByTime(3000);
+    expect(container.querySelector('#post-go-calendar').textContent).toBe('Ir al Calendario (2)');
+
+    // Advance remaining 2 seconds — should navigate
+    vi.advanceTimersByTime(2000);
+    expect(location.hash).toBe('#calendar');
+  });
+
+  it('cancels auto-navigate when adding a note', async () => {
+    vi.useFakeTimers();
+    render(container);
+    container.querySelector('.mood-btn[data-mood="4"]').click();
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(container.querySelector('#post-add-note')).toBeTruthy();
+
+    // Click "Añadir nota" — should cancel timer and remove calendar button from DOM
+    container.querySelector('#post-add-note').click();
+
+    // Advance past 5s — should NOT navigate
+    vi.advanceTimersByTime(6000);
+    expect(location.hash).toBe('');
   });
 
   it('"Añadir nota" reveals textarea', async () => {
@@ -233,6 +278,33 @@ describe('mood-prompt screen', () => {
     const noteSave = mockPutMood.mock.calls[2][0];
     expect(noteSave.mood).toBe(5);
     expect(noteSave.note).toBe('After correction');
+  });
+
+  it('resets countdown timer when correcting mood', async () => {
+    vi.useFakeTimers();
+    render(container);
+    container.querySelector('.mood-btn[data-mood="3"]').click();
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(container.querySelector('#post-go-calendar').textContent).toBe('Ir al Calendario (5)');
+
+    // Advance 3 seconds
+    vi.advanceTimersByTime(3000);
+    expect(container.querySelector('#post-go-calendar').textContent).toBe('Ir al Calendario (2)');
+
+    // Correct mood — timer should reset to 5
+    container.querySelector('.mood-btn[data-mood="5"]').click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(container.querySelector('#post-go-calendar').textContent).toBe('Ir al Calendario (5)');
+
+    // Advance 4 seconds — should still be counting (not navigated)
+    vi.advanceTimersByTime(4000);
+    expect(location.hash).toBe('');
+    expect(container.querySelector('#post-go-calendar').textContent).toBe('Ir al Calendario (1)');
+
+    // 1 more second — now it navigates
+    vi.advanceTimersByTime(1000);
+    expect(location.hash).toBe('#calendar');
   });
 
   it('shows error toast when putMood fails', async () => {
