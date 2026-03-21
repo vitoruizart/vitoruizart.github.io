@@ -1,5 +1,5 @@
 // Service worker — cache-first for static assets, skip GitHub API
-const CACHE_NAME = 'hayt-v3';
+const CACHE_NAME = 'hayt-v4';
 const STATIC_ASSETS = [
   '/hayt/',
   '/hayt/index.html',
@@ -20,6 +20,8 @@ const STATIC_ASSETS = [
   '/hayt/js/components/trend-chart.js',
   '/hayt/js/components/toast.js',
   '/hayt/js/components/mood-banner.js',
+  '/hayt/js/components/mood-gauge.js',
+  '/hayt/js/components/mood-insights.js',
   '/hayt/js/components/nav.js',
   '/hayt/js/screens/mood-prompt.js',
   '/hayt/js/screens/calendar.js',
@@ -28,6 +30,7 @@ const STATIC_ASSETS = [
   '/hayt/manifest.json',
   '/hayt/icons/icon-192.png',
   '/hayt/icons/icon-512.png',
+  '/hayt/icons/mood-5.png',
 ];
 
 self.addEventListener('install', (event) => {

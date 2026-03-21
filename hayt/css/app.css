@@ -112,33 +112,28 @@ body {
 }
 .nav-btn:active { opacity: 0.6; }
 
-.sync-dot {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  display: none;
-}
-.sync-dot.sync-active {
-  display: block;
-  background: var(--accent);
-  animation: pulse 1s infinite;
-}
-.sync-dot.sync-error {
-  display: block;
-  background: #e74c3c;
-}
-.sync-dot.sync-pending {
-  display: block;
-  background: #F39C12;
+/* Sync button state icons */
+.nav-sync-idle { color: var(--text-muted); }
+.nav-sync-syncing { color: var(--accent); animation: spin 1s linear infinite; }
+.nav-sync-pending { color: var(--accent); }
+.nav-sync-error { color: #e74c3c; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+/* Offline banner */
+.offline-banner {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px;
+  background: rgba(243, 156, 18, 0.15);
+  color: #F39C12;
+  border-bottom: 1px solid rgba(243, 156, 18, 0.2);
 }
+.offline-banner.hidden { display: none; }
 
 /* --- Mood Prompt --- */
 .mood-prompt {
@@ -295,7 +290,22 @@ body {
 .cal-month-title {
   font-size: 18px;
   font-weight: 600;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: default;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: color 0.15s;
 }
+.cal-month-title.can-go-today {
+  cursor: pointer;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 4px;
+}
+.cal-month-title.can-go-today:active { opacity: 0.6; }
 
 .cal-grid {
   display: grid;

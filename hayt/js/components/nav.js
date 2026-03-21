@@ -1,6 +1,20 @@
-// Top navigation bar — gear icon + sync indicator
+// Top navigation bar — sync icon with state-based icons, offline banner
 import * as state from '../state.js';
 import { toast } from './toast.js';
+
+const SYNC_ICONS = {
+  idle: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`,
+  syncing: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/></svg>`,
+  pending: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/></svg>`,
+  error: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+};
+
+const SYNC_TITLES = {
+  idle: 'Sincronizado',
+  syncing: 'Sincronizando…',
+  pending: 'Cambios pendientes',
+  error: 'Error de sincronización',
+};
 
 export function renderNav(container) {
   container.innerHTML = `
@@ -10,12 +24,8 @@ export function renderNav(container) {
         <span class="nav-title">hayt</span>
       </a>
       <div class="nav-actions">
-        <button class="nav-btn" id="nav-sync" aria-label="Sync" title="Sincronizar">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M1 4v6h6"/><path d="M23 20v-6h-6"/>
-            <path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/>
-          </svg>
-          <span class="sync-dot" id="sync-dot"></span>
+        <button class="nav-btn nav-sync-idle" id="nav-sync" aria-label="Sincronizado" title="Sincronizado">
+          ${SYNC_ICONS.idle}
         </button>
         <button class="nav-btn" id="nav-settings" aria-label="Settings" title="Ajustes">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -24,7 +34,8 @@ export function renderNav(container) {
           </svg>
         </button>
       </div>
-    </nav>`;
+    </nav>
+    <div class="offline-banner${navigator.onLine ? ' hidden' : ''}" id="offline-banner">Sin conexión</div>`;
 
   container.querySelector('#nav-settings').addEventListener('click', () => {
     location.hash = '#settings';
@@ -40,14 +51,29 @@ export function renderNav(container) {
     if (syncNow) syncNow(true);
   });
 
-  // Sync status indicator
+  // Sync status — swap icon and class per state
   state.on('syncStatus', status => {
-    const dot = document.getElementById('sync-dot');
-    if (!dot) return;
-    dot.className = 'sync-dot';
-    if (status === 'syncing') dot.classList.add('sync-active');
-    else if (status === 'error') dot.classList.add('sync-error');
-    else if (status === 'pending') dot.classList.add('sync-pending');
+    const btn = document.getElementById('nav-sync');
+    if (!btn) return;
+    const s = status || 'idle';
+    const icon = SYNC_ICONS[s] || SYNC_ICONS.idle;
+    const title = SYNC_TITLES[s] || SYNC_TITLES.idle;
+    btn.innerHTML = icon;
+    btn.className = 'nav-btn';
+    btn.classList.add(`nav-sync-${s}`);
+    btn.setAttribute('aria-label', title);
+    btn.setAttribute('title', title);
   });
 
+  // Offline banner
+  const showOffline = () => {
+    const banner = document.getElementById('offline-banner');
+    if (banner) banner.classList.remove('hidden');
+  };
+  const hideOffline = () => {
+    const banner = document.getElementById('offline-banner');
+    if (banner) banner.classList.add('hidden');
+  };
+  window.addEventListener('offline', showOffline);
+  window.addEventListener('online', hideOffline);
 }

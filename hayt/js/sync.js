@@ -369,6 +369,8 @@ export function stopPoll() {
   if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
 
+function handleOnline() { syncNow(); }
+
 export function startSync() {
   const creds = getCredentials();
   if (!creds) return;
@@ -376,12 +378,13 @@ export function startSync() {
   syncNow();
   startPoll();
   document.addEventListener('visibilitychange', handleVisibilityChange);
-  window.addEventListener('online', () => syncNow());
+  window.addEventListener('online', handleOnline);
 }
 
 export function stopSync() {
   stopPoll();
   document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('online', handleOnline);
 }
 
 // Expose for nav button

@@ -31,6 +31,8 @@ export async function render(container) {
 
 async function renderView(container) {
   const allMoods = await getAllMoods();
+  const today = new Date();
+  const isCurrentMonth = currentYear === today.getFullYear() && currentMonth === today.getMonth();
 
   // Group by date
   const moodsByDate = new Map();
@@ -45,7 +47,9 @@ async function renderView(container) {
         <button class="cal-nav-btn" id="cal-prev" aria-label="Mes anterior">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <h2 class="cal-month-title" id="cal-title">${formatMonthYear(currentYear, currentMonth)}</h2>
+        <button class="cal-month-title${isCurrentMonth ? '' : ' can-go-today'}" id="cal-title"
+          aria-label="${isCurrentMonth ? formatMonthYear(currentYear, currentMonth) : 'Ir al mes actual'}"
+          ${isCurrentMonth ? 'disabled' : ''}>${formatMonthYear(currentYear, currentMonth)}</button>
         <button class="cal-nav-btn" id="cal-next" aria-label="Mes siguiente">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
@@ -78,6 +82,15 @@ async function renderView(container) {
   // Nav buttons
   container.querySelector('#cal-prev').addEventListener('click', () => navigateMonth(container, -1));
   container.querySelector('#cal-next').addEventListener('click', () => navigateMonth(container, 1));
+
+  // Today shortcut — tap month title to jump to current month
+  container.querySelector('#cal-title').addEventListener('click', () => {
+    const now = new Date();
+    if (currentYear === now.getFullYear() && currentMonth === now.getMonth()) return;
+    currentYear = now.getFullYear();
+    currentMonth = now.getMonth();
+    renderView(container);
+  });
 
 }
 

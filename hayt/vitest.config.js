@@ -7,6 +7,8 @@ export default defineConfig({
     environment: 'node',
     environmentMatchGlobs: [
       ['tests/components/calendar-grid.test.js', 'happy-dom'],
+      ['tests/components/nav.test.js', 'happy-dom'],
+      ['tests/sync-lifecycle.test.js', 'happy-dom'],
       ['tests/lib/update-checker.test.js', 'happy-dom'],
       ['tests/screens/**/*.test.js', 'happy-dom'],
     ],
