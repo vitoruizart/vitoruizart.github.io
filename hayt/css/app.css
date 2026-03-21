@@ -220,12 +220,13 @@ body {
   min-height: 60px;
   font-family: inherit;
 }
+.note-actions { display: flex; gap: 10px; align-self: flex-end; }
 .note-save-btn {
-  align-self: flex-end;
   flex: none;
   width: auto;
   padding: 10px 32px;
 }
+.note-delete-btn { flex: none; width: auto; padding: 10px 16px; font-size: 13px; }
 
 /* Post-save success + actions */
 .mood-saved-msg {
@@ -402,6 +403,16 @@ body {
 .trend-chart svg {
   display: block;
 }
+
+/* Mood Gauge */
+.mood-gauge { background: var(--bg-card); border-radius: var(--radius); padding: 16px; margin-top: 16px; }
+.mood-gauge-title { font-size: 14px; font-weight: 600; color: var(--text-muted); margin: 0 0 8px; text-align: center; }
+.mood-gauge svg { display: block; }
+.mood-gauge-legend { display: flex; justify-content: space-around; margin-top: 12px; }
+.mood-gauge-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mood-gauge-icon { position: relative; }
+.mood-gauge-badge { position: absolute; top: -4px; right: -8px; min-width: 18px; height: 18px; border-radius: 9px; font-size: 10px; font-weight: 700; color: #fff; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+.mood-gauge-label { font-size: 11px; color: var(--text-muted); text-align: center; }
 
 /* Mood Insights */
 .insights-section { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
