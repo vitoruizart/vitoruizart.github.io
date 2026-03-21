@@ -3,8 +3,8 @@ export const MOODS = [
   { value: 5, label: 'Feliz',        color: '#F39C12', bg: 'rgba(243,156,18,0.15)' },
   { value: 4, label: 'Contenta',     color: '#2ECC71', bg: 'rgba(46,204,113,0.15)' },
   { value: 3, label: 'Ni fu ni fa',  color: '#9B59B6', bg: 'rgba(155,89,182,0.15)' },
-  { value: 2, label: 'Triste',       color: '#5B9BD5', bg: 'rgba(91,155,213,0.15)' },
-  { value: 1, label: 'Hecha polvo',  color: '#4a4a4a', bg: 'rgba(74,74,74,0.15)' },
+  { value: 2, label: 'Regular',      color: '#5B9BD5', bg: 'rgba(91,155,213,0.15)' },
+  { value: 1, label: 'Mal',          color: '#4a4a4a', bg: 'rgba(74,74,74,0.15)' },
 ];
 
 export function getMood(value) {
@@ -18,9 +18,15 @@ export const SYNC_VERSION = 1;
 export const COMPACTION_THRESHOLD = 30;
 export const POLL_INTERVAL_MS = 60_000;
 
+// Backups
+export const BACKUP_WEEKLY_FILE = 'hayt-backup-weekly.json';
+export const BACKUP_MONTHLY_FILE = 'hayt-backup-monthly.json';
+export const BACKUP_YEARLY_FILE = 'hayt-backup-yearly.json';
+export const BACKUP_RATE_LIMIT_MIN = 8;
+
 // Prompt
 export const DEFAULT_PROMPT_HOURS = 8;
-export const APP_VERSION = '20260321.0929';
+export const APP_VERSION = '20260321.2001';
 
 export function getPromptCooldownMs() {
   const stored = localStorage.getItem('hayt-prompt-hours');

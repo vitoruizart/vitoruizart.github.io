@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   toDateStr, toTimeStr, parseDate,
   getDaysInMonth, getFirstDayOfWeek, formatMonthYear, daysAgo,
+  getISOWeekString, getMonthString, getYearString,
 } from '../../js/lib/date-utils.js';
 
 describe('toDateStr', () => {
@@ -120,5 +121,71 @@ describe('daysAgo', () => {
 
   it('crosses month boundary', () => {
     expect(daysAgo(15)).toBe('2025-02-28');
+  });
+});
+
+describe('getISOWeekString', () => {
+  it('returns correct ISO week for a mid-year date', () => {
+    expect(getISOWeekString(new Date(2026, 2, 21))).toBe('2026-W12');
+  });
+
+  it('returns week 01 for early January when it falls in the current year', () => {
+    // 2026-01-05 is a Monday → ISO week 2 of 2026
+    expect(getISOWeekString(new Date(2026, 0, 5))).toBe('2026-W02');
+  });
+
+  it('handles Jan 1 that belongs to previous year ISO week', () => {
+    // 2027-01-01 is a Friday → ISO week 53 of 2026
+    expect(getISOWeekString(new Date(2027, 0, 1))).toBe('2026-W53');
+  });
+
+  it('handles Dec 31 that belongs to next year ISO week', () => {
+    // 2025-12-29 is Monday → ISO week 1 of 2026
+    expect(getISOWeekString(new Date(2025, 11, 29))).toBe('2026-W01');
+  });
+
+  it('pads single-digit week numbers', () => {
+    expect(getISOWeekString(new Date(2026, 0, 1))).toBe('2026-W01');
+  });
+
+  it('defaults to current date', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 15));
+    expect(getISOWeekString()).toBe('2026-W25');
+    vi.useRealTimers();
+  });
+});
+
+describe('getMonthString', () => {
+  it('returns YYYY-MM format', () => {
+    expect(getMonthString(new Date(2026, 2, 21))).toBe('2026-03');
+  });
+
+  it('pads single-digit months', () => {
+    expect(getMonthString(new Date(2026, 0, 1))).toBe('2026-01');
+  });
+
+  it('handles December', () => {
+    expect(getMonthString(new Date(2026, 11, 31))).toBe('2026-12');
+  });
+
+  it('defaults to current date', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 15));
+    expect(getMonthString()).toBe('2026-06');
+    vi.useRealTimers();
+  });
+});
+
+describe('getYearString', () => {
+  it('returns 4-digit year', () => {
+    expect(getYearString(new Date(2026, 2, 21))).toBe('2026');
+  });
+
+  it('defaults to current date', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 15));
+    expect(getYearString()).toBe('2026');
+    vi.useRealTimers();
   });
 });

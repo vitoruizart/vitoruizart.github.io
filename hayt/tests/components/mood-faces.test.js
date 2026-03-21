@@ -27,8 +27,8 @@ describe('moodFaceSvg', () => {
     expect(moodFaceSvg(5)).toContain('alt="Feliz"');
     expect(moodFaceSvg(4)).toContain('alt="Contenta"');
     expect(moodFaceSvg(3)).toContain('alt="Ni fu ni fa"');
-    expect(moodFaceSvg(2)).toContain('alt="Triste"');
-    expect(moodFaceSvg(1)).toContain('alt="Hecha polvo"');
+    expect(moodFaceSvg(2)).toContain('alt="Regular"');
+    expect(moodFaceSvg(1)).toContain('alt="Mal"');
   });
 
   it('defaults to size 100', () => {

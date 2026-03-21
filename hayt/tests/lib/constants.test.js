@@ -37,7 +37,7 @@ describe('getMood', () => {
   });
 
   it('returns correct mood for value 1', () => {
-    expect(getMood(1).label).toBe('Hecha polvo');
+    expect(getMood(1).label).toBe('Mal');
   });
 
   it('falls back to mood 3 for invalid value', () => {

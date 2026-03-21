@@ -3,7 +3,7 @@ import { testConnection } from '../github-api.js';
 import { clearEncryptionKey } from '../crypto.js';
 import { toast } from '../components/toast.js';
 import { startSync, stopSync, syncNow } from '../sync.js';
-import { getAllMoods } from '../db.js';
+import { getAllMoods, getMeta } from '../db.js';
 import { DEFAULT_PROMPT_HOURS, APP_VERSION } from '../lib/constants.js';
 import { escapeAttr, isValidPat, isValidRepo } from '../lib/validators.js';
 import { checkForUpdate } from '../lib/update-checker.js';
@@ -89,6 +89,14 @@ export function render(container) {
 
           <div class="settings-actions">
             <button class="btn-secondary" id="s-sync-now">Sincronizar ahora</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3 class="section-title">Respaldos automáticos</h3>
+          <p class="settings-info">Se crean automáticamente al sincronizar cuando cambia la semana, mes o año.</p>
+          <div id="backup-status">
+            <p class="settings-info" style="opacity:0.5">Cargando...</p>
           </div>
         </div>
       </div>
@@ -189,6 +197,22 @@ export function render(container) {
   container.querySelector('#s-sync-now').addEventListener('click', () => {
     syncNow(true);
     checkForUpdate();
+  });
+
+  // Backup status (async, non-blocking)
+  getMeta('backups').then(meta => {
+    const el = container.querySelector('#backup-status');
+    if (!el) return;
+    const lines = [];
+    if (meta?.lastWeekly) lines.push(`Semanal: ${meta.lastWeekly}`);
+    if (meta?.lastMonthly) lines.push(`Mensual: ${meta.lastMonthly}`);
+    if (meta?.lastYearly) lines.push(`Anual: ${meta.lastYearly}`);
+    el.innerHTML = lines.length > 0
+      ? lines.map(l => `<p class="settings-info">${l}</p>`).join('')
+      : '<p class="settings-info" style="opacity:0.5">Sin respaldos aún</p>';
+  }).catch(() => {
+    const el = container.querySelector('#backup-status');
+    if (el) el.innerHTML = '<p class="settings-info" style="opacity:0.5">Sin respaldos aún</p>';
   });
 
   // Export CSV

@@ -12,7 +12,11 @@ import {
   addChangeEntry, getAllChangeEntries, clearChangeEntries,
   getMeta, setMeta,
 } from './db.js';
-import { SNAPSHOT_FILE, CHANGELOG_FILE, SYNC_VERSION, COMPACTION_THRESHOLD, POLL_INTERVAL_MS } from './lib/constants.js';
+import {
+  SNAPSHOT_FILE, CHANGELOG_FILE, SYNC_VERSION, COMPACTION_THRESHOLD, POLL_INTERVAL_MS,
+  BACKUP_WEEKLY_FILE, BACKUP_MONTHLY_FILE, BACKUP_YEARLY_FILE, BACKUP_RATE_LIMIT_MIN,
+} from './lib/constants.js';
+import { getISOWeekString, getMonthString, getYearString } from './lib/date-utils.js';
 import { toast } from './components/toast.js';
 import * as state from './state.js';
 
@@ -257,6 +261,10 @@ export async function syncNow(manual = false) {
     state.set('syncStatus', 'idle');
     state.set('syncError', null);
     state.set('moodsUpdated', Date.now());
+
+    // Automatic backups (non-critical, errors logged but don't fail sync)
+    await maybeCreateBackups(creds, encKey, controller.signal);
+
     if (manual) toast('Sincronizado', 'success', 1500);
 
     // Warn on low rate limit
@@ -311,6 +319,65 @@ async function compact(creds, encKey, snapshotSha, changelogSha, signal) {
     cachedChangelogSha = newChangelogSha;
   } catch (err) {
     console.warn('Compaction failed (non-critical):', err);
+  }
+}
+
+// --- Automatic backups ---
+
+export async function maybeCreateBackups(creds, encKey, signal) {
+  if (getRateLimitRemaining() < BACKUP_RATE_LIMIT_MIN) return;
+
+  const now = new Date();
+  const currentWeek = getISOWeekString(now);
+  const currentMonth = getMonthString(now);
+  const currentYear = getYearString(now);
+
+  const meta = await getMeta('backups');
+  const needWeekly = currentWeek !== meta?.lastWeekly;
+  const needMonthly = currentMonth !== meta?.lastMonthly;
+  const needYearly = currentYear !== meta?.lastYearly;
+
+  if (!needWeekly && !needMonthly && !needYearly) return;
+
+  const allMoods = await getAllMoods();
+  if (allMoods.length === 0) return;
+
+  const salt = getCachedSalt() || generateSalt();
+  const encryptedMoods = await Promise.all(
+    allMoods.map(m => encryptEntity(encKey, m)),
+  );
+  const baseBackup = {
+    syncVersion: SYNC_VERSION,
+    encryptionSalt: salt,
+    encryptionVerifier: await createVerifier(encKey),
+    moods: encryptedMoods,
+    backupTimestamp: Date.now(),
+  };
+
+  const updates = {};
+  const tasks = [
+    [needWeekly, BACKUP_WEEKLY_FILE, 'lastWeekly', currentWeek],
+    [needMonthly, BACKUP_MONTHLY_FILE, 'lastMonthly', currentMonth],
+    [needYearly, BACKUP_YEARLY_FILE, 'lastYearly', currentYear],
+  ];
+
+  for (const [needed, file, metaKey, period] of tasks) {
+    if (!needed) continue;
+    try {
+      const existing = await getFile(creds.pat, creds.repo, file, signal);
+      await putFile(
+        creds.pat, creds.repo, file,
+        JSON.stringify({ ...baseBackup, backupPeriod: period }),
+        existing?.sha, signal,
+      );
+      updates[metaKey] = period;
+    } catch (err) {
+      console.warn(`Backup ${file} failed (non-critical):`, err);
+    }
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await setMeta('backups', { ...(meta ?? {}), ...updates });
   }
 }
 
