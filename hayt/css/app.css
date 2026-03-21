@@ -577,6 +577,10 @@ body {
   margin-bottom: 16px;
 }
 
+#day-add.hidden {
+  display: none;
+}
+
 .mood-picker.hidden {
   display: none;
 }
