@@ -278,7 +278,7 @@ describe('day-detail screen', () => {
     await vi.waitFor(() => {
       expect(container.querySelector('#post-add-note')).toBeTruthy();
       expect(container.querySelector('#post-done')).toBeTruthy();
-      expect(container.querySelector('#post-done').textContent).toBe('Listo');
+      expect(container.querySelector('#post-done').textContent).toBe('Listo (5)');
     });
   });
 
@@ -295,6 +295,100 @@ describe('day-detail screen', () => {
 
     container.querySelector('#post-done').click();
     expect(container.querySelector('#mood-picker').classList.contains('hidden')).toBe(true);
+  });
+
+  it('hides #day-add when add picker opens, re-shows after dismiss', async () => {
+    mockGetMoodsByDate.mockResolvedValue([]);
+    await render(container, '2025-03-15');
+
+    const addBtn = container.querySelector('#day-add');
+    expect(addBtn.classList.contains('hidden')).toBe(false);
+
+    addBtn.click();
+    expect(addBtn.classList.contains('hidden')).toBe(true);
+    expect(container.querySelector('#mood-picker').classList.contains('hidden')).toBe(false);
+
+    // Select a mood, then dismiss via "Listo"
+    container.querySelector('#mood-picker .mood-btn[data-mood="4"]').click();
+    await vi.waitFor(() => {
+      expect(container.querySelector('#post-done')).toBeTruthy();
+    });
+    container.querySelector('#post-done').click();
+    expect(addBtn.classList.contains('hidden')).toBe(false);
+  });
+
+  it('hides #day-add when editing the last entry, keeps visible for non-last', async () => {
+    mockGetMoodsByDate.mockResolvedValue([...SAMPLE_MOODS]);
+    await render(container, '2025-03-15');
+
+    const addBtn = container.querySelector('#day-add');
+    const editBtns = container.querySelectorAll('.entry-edit');
+
+    // Edit first entry (not last) — add button stays visible
+    editBtns[0].click();
+    expect(addBtn.classList.contains('hidden')).toBe(false);
+
+    // Close it
+    editBtns[0].click();
+
+    // Edit last entry — add button hidden
+    editBtns[1].click();
+    expect(addBtn.classList.contains('hidden')).toBe(true);
+
+    // Toggle off — add button re-shown
+    editBtns[1].click();
+    expect(addBtn.classList.contains('hidden')).toBe(false);
+  });
+
+  it('Done button counts down from 5 and auto-dismisses at 0', async () => {
+    vi.useFakeTimers();
+    mockGetMoodsByDate.mockResolvedValue([]);
+    await render(container, '2025-03-15');
+
+    container.querySelector('#day-add').click();
+    container.querySelector('#mood-picker .mood-btn[data-mood="4"]').click();
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('#post-done')).toBeTruthy();
+    });
+
+    const doneBtn = container.querySelector('#post-done');
+    expect(doneBtn.textContent).toBe('Listo (5)');
+
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(doneBtn.textContent).toBe('Listo (4)');
+
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(doneBtn.textContent).toBe('Listo (3)');
+
+    await vi.advanceTimersByTimeAsync(3000);
+    // Should have auto-dismissed
+    expect(container.querySelector('#mood-picker').classList.contains('hidden')).toBe(true);
+    expect(container.querySelector('#day-add').classList.contains('hidden')).toBe(false);
+
+    vi.useRealTimers();
+  });
+
+  it('clicking "Añadir nota" cancels the countdown', async () => {
+    vi.useFakeTimers();
+    mockGetMoodsByDate.mockResolvedValue([]);
+    await render(container, '2025-03-15');
+
+    container.querySelector('#day-add').click();
+    container.querySelector('#mood-picker .mood-btn[data-mood="4"]').click();
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('#post-add-note')).toBeTruthy();
+    });
+
+    container.querySelector('#post-add-note').click();
+
+    // Advance past 5 seconds — picker should still be open (countdown cancelled)
+    await vi.advanceTimersByTimeAsync(6000);
+    expect(container.querySelector('#mood-picker').classList.contains('hidden')).toBe(false);
+    expect(container.querySelector('#day-mood-note')).toBeTruthy();
+
+    vi.useRealTimers();
   });
 
   it('after saving a note, entry is visible and picker is hidden', async () => {

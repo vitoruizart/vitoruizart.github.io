@@ -72,17 +72,19 @@ export async function render(container, dateStr) {
   container.querySelector('#day-add').addEventListener('click', () => {
     // Close any open inline edit picker
     const editPicker = container.querySelector('.edit-picker-inline');
-    if (editPicker) editPicker.remove();
-    const picker = container.querySelector('#mood-picker');
-    picker.classList.toggle('hidden');
-    if (!picker.classList.contains('hidden')) {
-      // Restore picker content (may have been replaced by post-save UI)
-      picker.innerHTML = moodGridHtml;
-      picker.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      picker.querySelectorAll('.mood-btn').forEach(mbtn => {
-        mbtn.onclick = () => addMoodForDay(container, dateStr, parseInt(mbtn.dataset.mood, 10));
-      });
+    if (editPicker) {
+      editPicker.remove();
+      container.querySelector('#day-add').classList.remove('hidden');
     }
+    const picker = container.querySelector('#mood-picker');
+    const addBtn = container.querySelector('#day-add');
+    picker.classList.remove('hidden');
+    addBtn.classList.add('hidden');
+    picker.innerHTML = moodGridHtml;
+    picker.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    picker.querySelectorAll('.mood-btn').forEach(mbtn => {
+      mbtn.onclick = () => addMoodForDay(container, dateStr, parseInt(mbtn.dataset.mood, 10));
+    });
   });
 }
 
@@ -179,6 +181,7 @@ function showEditPicker(container, dateStr, entryId, entry) {
   const existing = container.querySelector('.edit-picker-inline');
   if (existing && existing.dataset.entryId === entryId) {
     existing.remove();
+    container.querySelector('#day-add').classList.remove('hidden');
     return;
   }
   if (existing) existing.remove();
@@ -199,6 +202,12 @@ function showEditPicker(container, dateStr, entryId, entry) {
     </div>`;
   entryEl.after(picker);
   picker.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Hide add button when editing the last entry
+  const allEntries = container.querySelectorAll('#day-entries .day-entry');
+  if (entryEl === allEntries[allEntries.length - 1]) {
+    container.querySelector('#day-add').classList.add('hidden');
+  }
 
   picker.querySelectorAll('.mood-btn').forEach(mbtn => {
     mbtn.onclick = () => editMood(container, dateStr, entryId, entry, parseInt(mbtn.dataset.mood, 10));
@@ -285,18 +294,36 @@ function showInlineNoteStep(targetEl, container, dateStr, savedMood) {
   targetEl.innerHTML = `
     <div class="mood-post-actions">
       <button class="btn-primary" id="post-add-note">Añadir nota</button>
-      <button class="btn-secondary" id="post-done">Listo</button>
+      <button class="btn-secondary" id="post-done">Listo (5)</button>
     </div>`;
 
-  targetEl.querySelector('#post-done').addEventListener('click', () => {
+  const addBtn = container.querySelector('#day-add');
+  const doneBtn = targetEl.querySelector('#post-done');
+  let remaining = 5;
+
+  const dismiss = () => {
+    clearInterval(countdownId);
+    addBtn.classList.remove('hidden');
     if (targetEl.id === 'mood-picker') {
       targetEl.classList.add('hidden');
     } else {
       targetEl.remove();
     }
-  });
+  };
+
+  const countdownId = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      dismiss();
+    } else {
+      doneBtn.textContent = `Listo (${remaining})`;
+    }
+  }, 1000);
+
+  doneBtn.addEventListener('click', dismiss);
 
   targetEl.querySelector('#post-add-note').addEventListener('click', () => {
+    clearInterval(countdownId);
     const actions = targetEl.querySelector('.mood-post-actions');
     actions.innerHTML = `
       <div class="note-section">
@@ -335,6 +362,7 @@ function showInlineNoteStep(targetEl, container, dateStr, savedMood) {
       if (syncNow) syncNow();
       toast('Nota guardada', 'success', 1500);
       await refreshEntries(container, dateStr);
+      addBtn.classList.remove('hidden');
       if (targetEl.id === 'mood-picker') {
         targetEl.classList.add('hidden');
       } else {
