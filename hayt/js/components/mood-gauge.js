@@ -15,31 +15,23 @@ export function renderMoodGauge(allMoods) {
     counts.set(m.mood, (counts.get(m.mood) ?? 0) + 1);
   }
 
+  // Dome-shaped semicircle: left → top → right (two 90° arcs to avoid degenerate path)
+  const arcPath = `M ${CX - R},${CY} A ${R},${R} 0 0,1 ${CX},${CY - R} A ${R},${R} 0 0,1 ${CX + R},${CY}`;
+  const halfCirc = Math.PI * R;
+
   let arcs = '';
   if (total === 0) {
-    // Empty state: full gray arc
-    arcs = `<path d="M ${CX - R},${CY} A ${R},${R} 0 0,1 ${CX},${CY - R} A ${R},${R} 0 0,1 ${CX + R},${CY}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="${SW}" stroke-linecap="butt"/>`;
+    arcs = `<path d="${arcPath}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="${SW}" stroke-linecap="butt"/>`;
   } else {
-    let angle = Math.PI; // start from left
+    // Each segment reuses the same dome path, showing only its portion via stroke-dasharray
+    let offset = 0;
     for (const mood of MOODS) {
       const count = counts.get(mood.value);
       if (count === 0) continue;
-      const span = (count / total) * Math.PI;
-      const endAngle = angle - span;
-      const x1 = CX + R * Math.cos(angle);
-      const y1 = CY - R * Math.sin(angle);
-      const x2 = CX + R * Math.cos(endAngle);
-      const y2 = CY - R * Math.sin(endAngle);
-
-      // Full semi-circle: split through midpoint to avoid degenerate arc
-      if (span >= Math.PI - 0.001) {
-        const mx = CX + R * Math.cos(angle - span / 2);
-        const my = CY - R * Math.sin(angle - span / 2);
-        arcs += `<path d="M ${x1.toFixed(2)},${y1.toFixed(2)} A ${R},${R} 0 0,1 ${mx.toFixed(2)},${my.toFixed(2)} A ${R},${R} 0 0,1 ${x2.toFixed(2)},${y2.toFixed(2)}" fill="none" stroke="${mood.color}" stroke-width="${SW}" stroke-linecap="butt"/>`;
-      } else {
-        arcs += `<path d="M ${x1.toFixed(2)},${y1.toFixed(2)} A ${R},${R} 0 0,1 ${x2.toFixed(2)},${y2.toFixed(2)}" fill="none" stroke="${mood.color}" stroke-width="${SW}" stroke-linecap="butt"/>`;
-      }
-      angle = endAngle;
+      const segLen = (count / total) * halfCirc;
+      // dasharray: 0-length dash, skip offset, draw segLen, hide rest
+      arcs += `<path d="${arcPath}" fill="none" stroke="${mood.color}" stroke-width="${SW}" stroke-linecap="butt" stroke-dasharray="0 ${offset.toFixed(2)} ${segLen.toFixed(2)} ${(2 * halfCirc).toFixed(2)}"/>`;
+      offset += segLen;
     }
   }
 
