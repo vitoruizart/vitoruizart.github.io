@@ -56,6 +56,9 @@ async function route() {
       renderCalendar(mainEl);
     }
   }
+
+  // Move version into scrollable area so it doesn't create a fixed footer
+  mainEl.appendChild(versionEl);
 }
 
 // Render nav once
