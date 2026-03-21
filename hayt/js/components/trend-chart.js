@@ -29,11 +29,11 @@ export function renderTrendChart(allMoods) {
     points.push({ x, y, avg, date: dates[i] });
   }
 
-  // Y-axis labels
+  // Y-axis mood icons
+  const iconSize = 14;
   const yLabels = [5, 3, 1].map(v => {
     const y = PAD_Y + ((5 - v) / 4) * (H - 2 * PAD_Y);
-    const mood = getMood(v);
-    return `<text x="${PAD_X - 5}" y="${y + 4}" text-anchor="end" fill="${mood.color}" font-size="9">${v}</text>
+    return `<image href="icons/mood-${v}.png" x="${PAD_X - iconSize - 4}" y="${y - iconSize / 2}" width="${iconSize}" height="${iconSize}"/>
       <line x1="${PAD_X}" y1="${y}" x2="${W - PAD_X}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>`;
   }).join('');
 

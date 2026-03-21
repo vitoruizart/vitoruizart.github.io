@@ -61,6 +61,15 @@ describe('renderTrendChart', () => {
     expect(html).toContain('<polyline');
   });
 
+  it('uses mood icons instead of numbers on Y-axis', () => {
+    const html = renderTrendChart([]);
+    expect(html).toContain('href="icons/mood-5.png"');
+    expect(html).toContain('href="icons/mood-3.png"');
+    expect(html).toContain('href="icons/mood-1.png"');
+    // Should not have numeric text labels
+    expect(html).not.toMatch(/text-anchor="end"[^>]*>\d<\/text>/);
+  });
+
   it('ignores moods outside 30-day window', () => {
     const moods = [
       { date: '2024-01-01', mood: 5 }, // way outside
