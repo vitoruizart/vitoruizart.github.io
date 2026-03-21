@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.stubGlobal('localStorage', {
   getItem: () => null,
@@ -9,11 +9,19 @@ vi.stubGlobal('localStorage', {
 const { renderMoodGauge } = await import('../../js/components/mood-gauge.js');
 
 describe('renderMoodGauge', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2025, 2, 15)); // 2025-03-15
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('returns empty-state gauge with "0" when no moods', () => {
     const html = renderMoodGauge([]);
     expect(html).toContain('class="mood-gauge"');
     expect(html).toContain('>0</text>');
-    // Gray arc for empty state
     expect(html).toContain('stroke="rgba(255,255,255,0.1)"');
   });
 
@@ -34,10 +42,8 @@ describe('renderMoodGauge', () => {
       { date: '2025-03-03', mood: 1 },
     ];
     const html = renderMoodGauge(moods);
-    // Should have 3 colored path segments (one per mood value present)
     const paths = html.match(/<path /g) ?? [];
     expect(paths.length).toBe(3);
-    // Verify mood colors are present
     expect(html).toContain('#F39C12'); // mood 5
     expect(html).toContain('#9B59B6'); // mood 3
     expect(html).toContain('#4a4a4a'); // mood 1
@@ -50,7 +56,6 @@ describe('renderMoodGauge', () => {
       { date: '2025-03-03', mood: 3 },
     ];
     const html = renderMoodGauge(moods);
-    // Extract badge contents — badges are <span class="mood-gauge-badge" ...>N</span>
     const badges = [...html.matchAll(/class="mood-gauge-badge"[^>]*>(\d+)<\/span>/g)];
     // MOODS order: 5, 4, 3, 2, 1
     expect(badges.map(m => m[1])).toEqual(['2', '0', '1', '0', '0']);
@@ -63,7 +68,6 @@ describe('renderMoodGauge', () => {
       { date: '2025-03-03', mood: 4 },
     ];
     const html = renderMoodGauge(moods);
-    // Should have a single arc path (split through midpoint = 2 A commands in one path)
     const paths = html.match(/<path /g) ?? [];
     expect(paths.length).toBe(1);
     expect(html).toContain('#2ECC71'); // mood 4 color
@@ -75,5 +79,21 @@ describe('renderMoodGauge', () => {
     for (let v = 1; v <= 5; v++) {
       expect(html).toContain(`icons/mood-${v}.png`);
     }
+  });
+
+  it('excludes moods older than 60 days', () => {
+    const moods = [
+      { date: '2025-01-01', mood: 5 }, // 73 days ago — excluded
+      { date: '2025-03-10', mood: 3 }, // 5 days ago — included
+    ];
+    const html = renderMoodGauge(moods);
+    expect(html).toContain('>1</text>'); // only 1 mood in range
+    const paths = html.match(/<path /g) ?? [];
+    expect(paths.length).toBe(1);
+  });
+
+  it('shows title indicating 60-day window', () => {
+    const html = renderMoodGauge([]);
+    expect(html).toContain('60 días');
   });
 });

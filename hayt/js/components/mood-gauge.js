@@ -1,14 +1,17 @@
-// Semi-circular gauge chart showing mood count distribution
+// Semi-circular gauge chart showing mood count distribution (last 60 days)
 import { MOODS } from '../lib/constants.js';
+import { daysAgo } from '../lib/date-utils.js';
 
 export function renderMoodGauge(allMoods) {
   const CX = 140, CY = 140, R = 110, SW = 28;
-  const total = allMoods.length;
+  const cutoff = daysAgo(59);
+  const recentMoods = allMoods.filter(m => m.date >= cutoff);
+  const total = recentMoods.length;
 
   // Count per mood value
   const counts = new Map();
   for (const mood of MOODS) counts.set(mood.value, 0);
-  for (const m of allMoods) {
+  for (const m of recentMoods) {
     counts.set(m.mood, (counts.get(m.mood) ?? 0) + 1);
   }
 
@@ -55,7 +58,7 @@ export function renderMoodGauge(allMoods) {
   }).join('');
 
   return `<div class="mood-gauge">
-    <h3 class="mood-gauge-title">Conteo de ánimos</h3>
+    <h3 class="mood-gauge-title">Últimos 60 días</h3>
     <svg viewBox="0 0 280 180" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Distribución de estados de ánimo">
       ${arcs}${centerText}
     </svg>
