@@ -14,6 +14,8 @@ export async function shouldShowPrompt() {
 }
 
 export function render(container) {
+  let savedMoodRef = null;
+
   container.innerHTML = `
     <div class="mood-prompt">
       <h1 class="prompt-title">¿Cómo estás hoy?</h1>
@@ -31,12 +33,16 @@ export function render(container) {
   container.querySelectorAll('.mood-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const value = parseInt(btn.dataset.mood, 10);
-      handleMoodSelected(container, value);
+      if (savedMoodRef) {
+        handleMoodCorrection(container, savedMoodRef, value);
+      } else {
+        handleMoodSelected(container, value, (mood) => { savedMoodRef = mood; });
+      }
     });
   });
 }
 
-async function handleMoodSelected(container, moodValue) {
+async function handleMoodSelected(container, moodValue, onSaved) {
   // Disable mood buttons immediately
   container.querySelectorAll('.mood-btn').forEach(b => {
     b.style.opacity = parseInt(b.dataset.mood, 10) === moodValue ? '1' : '0.4';
@@ -80,8 +86,56 @@ async function handleMoodSelected(container, moodValue) {
   const { syncNow } = window._haytSync ?? {};
   if (syncNow) syncNow();
 
-  // Show post-save UI
+  // Show post-save UI and re-enable buttons for correction
   showPostSave(container, mood);
+  onSaved(mood);
+
+  container.querySelectorAll('.mood-btn').forEach(b => {
+    b.style.pointerEvents = '';
+  });
+}
+
+async function handleMoodCorrection(container, savedMoodRef, newValue) {
+  if (savedMoodRef.mood === newValue) return;
+
+  // Update highlight immediately
+  container.querySelectorAll('.mood-btn').forEach(b => {
+    b.style.opacity = parseInt(b.dataset.mood, 10) === newValue ? '1' : '0.4';
+    b.style.pointerEvents = 'none';
+  });
+
+  // Mutate in-place so existing note handler closures see the change
+  savedMoodRef.mood = newValue;
+
+  try {
+    await putMood({ ...savedMoodRef });
+    await addChangeEntry({
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      entityType: 'mood',
+      entityId: savedMoodRef.id,
+      operation: 'upsert',
+      data: { ...savedMoodRef },
+      deviceId: getDeviceId(),
+    });
+  } catch (err) {
+    console.error('Failed to update mood:', err);
+    toast('Error al actualizar', 'error');
+    container.querySelectorAll('.mood-btn').forEach(b => {
+      b.style.pointerEvents = '';
+    });
+    return;
+  }
+
+  state.set('syncStatus', 'pending');
+  const { syncNow } = window._haytSync ?? {};
+  if (syncNow) syncNow();
+  toast('Actualizado', 'success', 1500);
+
+  // Re-enable buttons for further corrections
+  container.querySelectorAll('.mood-btn').forEach(b => {
+    b.style.pointerEvents = '';
+  });
 }
 
 function showPostSave(container, savedMood) {

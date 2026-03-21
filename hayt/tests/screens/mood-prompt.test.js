@@ -152,6 +152,89 @@ describe('mood-prompt screen', () => {
     expect(mockPutMood).toHaveBeenCalledTimes(1);
   });
 
+  it('allows correcting mood selection after initial save', async () => {
+    render(container);
+    container.querySelector('.mood-btn[data-mood="3"]').click();
+
+    // Wait for full initial save flow (post-save UI appears after onSaved)
+    await vi.waitFor(() => {
+      expect(container.querySelector('.mood-saved-msg')).toBeTruthy();
+    });
+
+    // First save should be mood 3
+    expect(mockPutMood.mock.calls[0][0].mood).toBe(3);
+    const savedId = mockPutMood.mock.calls[0][0].id;
+
+    // Now correct to mood 5
+    container.querySelector('.mood-btn[data-mood="5"]').click();
+
+    await vi.waitFor(() => {
+      expect(mockToast).toHaveBeenCalledWith('Actualizado', 'success', 1500);
+    });
+
+    // Second save should reuse same ID but with mood 5
+    expect(mockPutMood).toHaveBeenCalledTimes(2);
+    const corrected = mockPutMood.mock.calls[1][0];
+    expect(corrected.id).toBe(savedId);
+    expect(corrected.mood).toBe(5);
+
+    // Highlight should reflect new selection
+    const btn5 = container.querySelector('.mood-btn[data-mood="5"]');
+    const btn3 = container.querySelector('.mood-btn[data-mood="3"]');
+    expect(btn5.style.opacity).toBe('1');
+    expect(btn3.style.opacity).toBe('0.4');
+  });
+
+  it('does not call putMood when correcting to same mood value', async () => {
+    render(container);
+    container.querySelector('.mood-btn[data-mood="3"]').click();
+
+    // Wait for full initial save flow
+    await vi.waitFor(() => {
+      expect(container.querySelector('.mood-saved-msg')).toBeTruthy();
+    });
+
+    // Tap same mood again — should be a no-op
+    container.querySelector('.mood-btn[data-mood="3"]').click();
+
+    // Give it a tick to ensure no extra calls
+    await new Promise(r => setTimeout(r, 10));
+    expect(mockPutMood).toHaveBeenCalledTimes(1);
+  });
+
+  it('note save uses corrected mood after correction', async () => {
+    render(container);
+    container.querySelector('.mood-btn[data-mood="3"]').click();
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('#post-add-note')).toBeTruthy();
+    });
+
+    // Open note field
+    container.querySelector('#post-add-note').click();
+
+    // Correct mood to 5
+    container.querySelector('.mood-btn[data-mood="5"]').click();
+
+    await vi.waitFor(() => {
+      expect(mockPutMood).toHaveBeenCalledTimes(2);
+    });
+
+    // Now save the note
+    const textarea = container.querySelector('#mood-note');
+    textarea.value = 'After correction';
+    container.querySelector('#note-save').click();
+
+    await vi.waitFor(() => {
+      expect(mockPutMood).toHaveBeenCalledTimes(3);
+    });
+
+    // Note save should have mood=5 (corrected), not mood=3
+    const noteSave = mockPutMood.mock.calls[2][0];
+    expect(noteSave.mood).toBe(5);
+    expect(noteSave.note).toBe('After correction');
+  });
+
   it('shows error toast when putMood fails', async () => {
     mockPutMood.mockRejectedValue(new Error('DB write failed'));
     render(container);
