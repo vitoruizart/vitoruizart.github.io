@@ -229,13 +229,21 @@ export function render(container) {
       for (const m of moods) {
         rows.push(`${m.date},${m.time ?? ''},${m.mood},${csvEscape(m.note ?? '')}`);
       }
+      const filename = `hayt-export-${new Date().toISOString().slice(0, 10)}.csv`;
       const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `hayt-export-${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
+
+      // iOS Safari ignores <a download> — use Share API when available
+      const file = new File([blob], filename, { type: 'text/csv' });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file] });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
       toast('Exportado', 'success', 1500);
     } catch (err) {
       console.error('Export failed:', err);

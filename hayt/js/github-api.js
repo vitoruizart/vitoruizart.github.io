@@ -9,13 +9,22 @@ export class RateLimitError extends Error {
   }
 }
 
+// Compatible timeout+abort signal — avoids AbortSignal.any() (Safari 17.4+)
+// and AbortSignal.timeout() (Safari 16.4+) which are too new for many iOS devices.
+function timeoutSignal(timeoutMs, externalSignal) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  if (externalSignal) {
+    if (externalSignal.aborted) { clearTimeout(timer); controller.abort(); }
+    else externalSignal.addEventListener('abort', () => { clearTimeout(timer); controller.abort(); }, { once: true });
+  }
+  controller.signal.addEventListener('abort', () => clearTimeout(timer), { once: true });
+  return controller.signal;
+}
+
 async function githubFetch(pat, repo, path, options, signal, keepalive, _retried) {
   const url = `https://api.github.com/repos/${repo}/contents/${path}`;
-  const fetchSignal = keepalive
-    ? undefined
-    : signal
-      ? AbortSignal.any([AbortSignal.timeout(15_000), signal])
-      : AbortSignal.timeout(15_000);
+  const fetchSignal = keepalive ? undefined : timeoutSignal(15_000, signal);
 
   const resp = await fetch(url, {
     ...options,
@@ -76,7 +85,7 @@ export async function testConnection(pat, repo) {
   try {
     const resp = await fetch(`https://api.github.com/repos/${repo}`, {
       cache: 'no-store',
-      signal: AbortSignal.timeout(15_000),
+      signal: timeoutSignal(15_000),
       headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github.v3+json' },
     });
     return resp.ok;

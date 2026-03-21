@@ -28,6 +28,7 @@ const STATIC_ASSETS = [
   '/hayt/js/screens/day-detail.js',
   '/hayt/js/screens/settings.js',
   '/hayt/manifest.json',
+  '/hayt/icons/icon-180.png',
   '/hayt/icons/icon-192.png',
   '/hayt/icons/icon-512.png',
   '/hayt/icons/mood-5.png',
