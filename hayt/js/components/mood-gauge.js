@@ -15,7 +15,7 @@ export function renderMoodGauge(allMoods) {
   let arcs = '';
   if (total === 0) {
     // Empty state: full gray arc
-    arcs = `<path d="M ${CX - R},${CY} A ${R},${R} 0 0,0 ${CX},${CY - R} A ${R},${R} 0 0,0 ${CX + R},${CY}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="${SW}" stroke-linecap="butt"/>`;
+    arcs = `<path d="M ${CX - R},${CY} A ${R},${R} 0 0,1 ${CX},${CY - R} A ${R},${R} 0 0,1 ${CX + R},${CY}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="${SW}" stroke-linecap="butt"/>`;
   } else {
     let angle = Math.PI; // start from left
     for (const mood of MOODS) {
@@ -32,9 +32,9 @@ export function renderMoodGauge(allMoods) {
       if (span >= Math.PI - 0.001) {
         const mx = CX + R * Math.cos(angle - span / 2);
         const my = CY - R * Math.sin(angle - span / 2);
-        arcs += `<path d="M ${x1.toFixed(2)},${y1.toFixed(2)} A ${R},${R} 0 0,0 ${mx.toFixed(2)},${my.toFixed(2)} A ${R},${R} 0 0,0 ${x2.toFixed(2)},${y2.toFixed(2)}" fill="none" stroke="${mood.color}" stroke-width="${SW}" stroke-linecap="butt"/>`;
+        arcs += `<path d="M ${x1.toFixed(2)},${y1.toFixed(2)} A ${R},${R} 0 0,1 ${mx.toFixed(2)},${my.toFixed(2)} A ${R},${R} 0 0,1 ${x2.toFixed(2)},${y2.toFixed(2)}" fill="none" stroke="${mood.color}" stroke-width="${SW}" stroke-linecap="butt"/>`;
       } else {
-        arcs += `<path d="M ${x1.toFixed(2)},${y1.toFixed(2)} A ${R},${R} 0 0,0 ${x2.toFixed(2)},${y2.toFixed(2)}" fill="none" stroke="${mood.color}" stroke-width="${SW}" stroke-linecap="butt"/>`;
+        arcs += `<path d="M ${x1.toFixed(2)},${y1.toFixed(2)} A ${R},${R} 0 0,1 ${x2.toFixed(2)},${y2.toFixed(2)}" fill="none" stroke="${mood.color}" stroke-width="${SW}" stroke-linecap="butt"/>`;
       }
       angle = endAngle;
     }
