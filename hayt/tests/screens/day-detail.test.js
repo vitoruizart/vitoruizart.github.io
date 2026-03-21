@@ -250,6 +250,28 @@ describe('day-detail screen', () => {
     expect(updatedMood.mood).toBe(5);
   });
 
+  it('auto-expands note form with existing note when editing a mood that has one', async () => {
+    const moodWithNote = { ...SAMPLE_MOODS[0], note: 'Existing note text' };
+    mockGetMoodsByDate.mockResolvedValue([moodWithNote]);
+    await render(container, '2025-03-15');
+
+    // Click edit to show picker
+    container.querySelector('.entry-edit').click();
+
+    // Select a new mood value — triggers showInlineNoteStep with the existing note
+    container.querySelector('.edit-picker-inline .mood-btn[data-mood="5"]').click();
+
+    await vi.waitFor(() => {
+      // Should jump straight to note form, not "Añadir nota" button
+      const textarea = container.querySelector('#day-mood-note');
+      expect(textarea).toBeTruthy();
+      expect(textarea.value).toBe('Existing note text');
+    });
+
+    // "Añadir nota" button should NOT be visible
+    expect(container.querySelector('#post-add-note')).toBeFalsy();
+  });
+
   it('shows new entry in list after adding a mood', async () => {
     mockGetMoodsByDate.mockResolvedValueOnce([]); // initial render
     await render(container, '2025-03-15');

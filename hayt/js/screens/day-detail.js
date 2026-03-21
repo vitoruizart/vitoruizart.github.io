@@ -291,15 +291,8 @@ async function addMoodForDay(container, dateStr, value) {
 }
 
 function showInlineNoteStep(targetEl, container, dateStr, savedMood) {
-  targetEl.innerHTML = `
-    <div class="mood-post-actions">
-      <button class="btn-primary" id="post-add-note">Añadir nota</button>
-      <button class="btn-secondary" id="post-done">Listo (5)</button>
-    </div>`;
-
   const addBtn = container.querySelector('#day-add');
-  const doneBtn = targetEl.querySelector('#post-done');
-  let remaining = 5;
+  let countdownId = null;
 
   const dismiss = () => {
     clearInterval(countdownId);
@@ -311,18 +304,7 @@ function showInlineNoteStep(targetEl, container, dateStr, savedMood) {
     }
   };
 
-  const countdownId = setInterval(() => {
-    remaining--;
-    if (remaining <= 0) {
-      dismiss();
-    } else {
-      doneBtn.textContent = `Listo (${remaining})`;
-    }
-  }, 1000);
-
-  doneBtn.addEventListener('click', dismiss);
-
-  targetEl.querySelector('#post-add-note').addEventListener('click', () => {
+  const showNoteForm = (existingNote) => {
     clearInterval(countdownId);
     const actions = targetEl.querySelector('.mood-post-actions');
     actions.innerHTML = `
@@ -333,6 +315,7 @@ function showInlineNoteStep(targetEl, container, dateStr, savedMood) {
       </div>`;
 
     const textarea = actions.querySelector('#day-mood-note');
+    if (existingNote) textarea.value = existingNote;
     textarea.focus();
 
     actions.querySelector('#day-note-save').addEventListener('click', async () => {
@@ -369,5 +352,33 @@ function showInlineNoteStep(targetEl, container, dateStr, savedMood) {
         targetEl.remove();
       }
     });
-  });
+  };
+
+  targetEl.innerHTML = `
+    <div class="mood-post-actions">
+      <button class="btn-primary" id="post-add-note">Añadir nota</button>
+      <button class="btn-secondary" id="post-done">Listo (5)</button>
+    </div>`;
+
+  // If the mood already has a note, skip to note form with it pre-filled
+  if (savedMood.note) {
+    showNoteForm(savedMood.note);
+    return;
+  }
+
+  const doneBtn = targetEl.querySelector('#post-done');
+  let remaining = 5;
+
+  countdownId = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      dismiss();
+    } else {
+      doneBtn.textContent = `Listo (${remaining})`;
+    }
+  }, 1000);
+
+  doneBtn.addEventListener('click', dismiss);
+
+  targetEl.querySelector('#post-add-note').addEventListener('click', () => showNoteForm(''));
 }
