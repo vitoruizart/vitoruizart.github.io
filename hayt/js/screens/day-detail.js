@@ -56,12 +56,41 @@ export async function render(container, dateStr) {
     location.hash = '#calendar';
   });
 
-  // Delete handlers (two-tap confirmation)
+  attachEntryHandlers(container, dateStr, entries);
+
+  // Add mood
+  const moodGridHtml = `
+    <h3 class="picker-title">${pickerTitle}</h3>
+    <div class="mood-grid mood-grid-small">
+      ${MOODS.map(m => `
+        <button class="mood-btn mood-btn-small" data-mood="${m.value}">
+          ${moodFaceSvg(m.value, 56)}
+          <span class="mood-label">${m.label}</span>
+        </button>
+      `).join('')}
+    </div>`;
+  container.querySelector('#day-add').addEventListener('click', () => {
+    // Close any open inline edit picker
+    const editPicker = container.querySelector('.edit-picker-inline');
+    if (editPicker) editPicker.remove();
+    const picker = container.querySelector('#mood-picker');
+    picker.classList.toggle('hidden');
+    if (!picker.classList.contains('hidden')) {
+      // Restore picker content (may have been replaced by post-save UI)
+      picker.innerHTML = moodGridHtml;
+      picker.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      picker.querySelectorAll('.mood-btn').forEach(mbtn => {
+        mbtn.onclick = () => addMoodForDay(container, dateStr, parseInt(mbtn.dataset.mood, 10));
+      });
+    }
+  });
+}
+
+function attachEntryHandlers(container, dateStr, entries) {
   container.querySelectorAll('.entry-delete').forEach(btn => {
     let confirmTimeout = null;
     btn.addEventListener('click', async () => {
       if (!btn.classList.contains('confirm')) {
-        // First tap: enter confirm state
         btn.classList.add('confirm');
         btn.innerHTML = '¿Eliminar?';
         confirmTimeout = setTimeout(() => {
@@ -70,7 +99,6 @@ export async function render(container, dateStr) {
         }, 3000);
         return;
       }
-      // Second tap: actually delete
       clearTimeout(confirmTimeout);
       const id = btn.dataset.id;
       try {
@@ -97,28 +125,23 @@ export async function render(container, dateStr) {
     });
   });
 
-  // Edit handlers
   container.querySelectorAll('.entry-edit').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
       showEditPicker(container, dateStr, id, entries.find(e => e.id === id));
     });
   });
+}
 
-  // Add mood
-  container.querySelector('#day-add').addEventListener('click', () => {
-    // Close any open inline edit picker
-    const editPicker = container.querySelector('.edit-picker-inline');
-    if (editPicker) editPicker.remove();
-    const picker = container.querySelector('#mood-picker');
-    picker.classList.toggle('hidden');
-    if (!picker.classList.contains('hidden')) {
-      picker.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-    picker.querySelectorAll('.mood-btn').forEach(mbtn => {
-      mbtn.onclick = () => addMoodForDay(container, dateStr, parseInt(mbtn.dataset.mood, 10));
-    });
-  });
+async function refreshEntries(container, dateStr) {
+  const entries = await getMoodsByDate(dateStr);
+  entries.sort((a, b) => a.timestamp - b.timestamp);
+  const entriesEl = container.querySelector('#day-entries');
+  entriesEl.innerHTML = entries.length === 0
+    ? '<p class="day-empty">Sin registros este día</p>'
+    : entries.map(e => renderEntry(e)).join('');
+  attachEntryHandlers(container, dateStr, entries);
+  return entries;
 }
 
 function renderEntry(entry) {
@@ -206,9 +229,17 @@ async function editMood(container, dateStr, entryId, entry, newValue) {
   if (syncNow) syncNow();
   toast('Actualizado', 'success', 1500);
 
-  // Show inline note step below the entry
-  const editPicker = container.querySelector('.edit-picker-inline');
-  showInlineNoteStep(editPicker, container, dateStr, updated, newValue);
+  await refreshEntries(container, dateStr);
+
+  // Show inline note step below the edited entry
+  const entryEl = container.querySelector(`.entry-edit[data-id="${entryId}"]`)?.closest('.day-entry');
+  if (entryEl) {
+    const postSaveEl = document.createElement('div');
+    postSaveEl.className = 'edit-picker-inline';
+    postSaveEl.dataset.entryId = entryId;
+    entryEl.after(postSaveEl);
+    showInlineNoteStep(postSaveEl, container, dateStr, updated);
+  }
 }
 
 async function addMoodForDay(container, dateStr, value) {
@@ -243,27 +274,27 @@ async function addMoodForDay(container, dateStr, value) {
   if (syncFn) syncFn();
   toast('Guardado', 'success', 1500);
 
+  await refreshEntries(container, dateStr);
+
   // Show note step in the add picker area
   const picker = container.querySelector('#mood-picker');
-  showInlineNoteStep(picker, container, dateStr, mood, value);
+  showInlineNoteStep(picker, container, dateStr, mood);
 }
 
-function showInlineNoteStep(targetEl, container, dateStr, savedMood, selectedValue) {
-  // Replace the picker content with selected mood + success + note option
+function showInlineNoteStep(targetEl, container, dateStr, savedMood) {
   targetEl.innerHTML = `
-    <div class="mood-grid mood-grid-small">
-      ${MOODS.map(m => `
-        <button class="mood-btn mood-btn-small" data-mood="${m.value}"
-          style="opacity:${m.value === selectedValue ? '1' : '0.4'};pointer-events:none" disabled>
-          ${moodFaceSvg(m.value, 56)}
-          <span class="mood-label">${m.label}</span>
-        </button>
-      `).join('')}
-    </div>
-    <p class="mood-saved-msg">Estado de ánimo registrado</p>
     <div class="mood-post-actions">
       <button class="btn-primary" id="post-add-note">Añadir nota</button>
+      <button class="btn-secondary" id="post-done">Listo</button>
     </div>`;
+
+  targetEl.querySelector('#post-done').addEventListener('click', () => {
+    if (targetEl.id === 'mood-picker') {
+      targetEl.classList.add('hidden');
+    } else {
+      targetEl.remove();
+    }
+  });
 
   targetEl.querySelector('#post-add-note').addEventListener('click', () => {
     const actions = targetEl.querySelector('.mood-post-actions');
@@ -303,7 +334,12 @@ function showInlineNoteStep(targetEl, container, dateStr, savedMood, selectedVal
       const { syncNow } = window._haytSync ?? {};
       if (syncNow) syncNow();
       toast('Nota guardada', 'success', 1500);
-      render(container, dateStr);
+      await refreshEntries(container, dateStr);
+      if (targetEl.id === 'mood-picker') {
+        targetEl.classList.add('hidden');
+      } else {
+        targetEl.remove();
+      }
     });
   });
 }

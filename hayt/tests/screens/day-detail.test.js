@@ -167,7 +167,6 @@ describe('day-detail screen', () => {
       expect(container.querySelector('#post-add-note')).toBeTruthy();
     });
 
-    expect(container.querySelector('.mood-saved-msg').textContent).toContain('Estado de ánimo registrado');
   });
 
   it('typing a note and saving updates the mood record after add', async () => {
@@ -218,7 +217,6 @@ describe('day-detail screen', () => {
       expect(container.querySelector('#post-add-note')).toBeTruthy();
     });
 
-    expect(container.querySelector('.mood-saved-msg').textContent).toContain('Estado de ánimo registrado');
   });
 
   it('typing a note and saving updates the mood record after edit', async () => {
@@ -250,5 +248,82 @@ describe('day-detail screen', () => {
     const updatedMood = mockPutMood.mock.calls[1][0];
     expect(updatedMood.note).toBe('Mood improved after lunch');
     expect(updatedMood.mood).toBe(5);
+  });
+
+  it('shows new entry in list after adding a mood', async () => {
+    mockGetMoodsByDate.mockResolvedValueOnce([]); // initial render
+    await render(container, '2025-03-15');
+    expect(container.querySelectorAll('.day-entry').length).toBe(0);
+
+    // After add, refreshEntries will re-fetch — return the new entry
+    mockGetMoodsByDate.mockResolvedValue([
+      { id: 'new-mood', mood: 3, date: '2025-03-15', timestamp: 5000, time: '15:00' },
+    ]);
+
+    container.querySelector('#day-add').click();
+    container.querySelector('#mood-picker .mood-btn[data-mood="3"]').click();
+
+    await vi.waitFor(() => {
+      expect(container.querySelectorAll('.day-entry').length).toBe(1);
+    });
+  });
+
+  it('shows "Listo" button alongside "Añadir nota" after adding a mood', async () => {
+    mockGetMoodsByDate.mockResolvedValue([]);
+    await render(container, '2025-03-15');
+
+    container.querySelector('#day-add').click();
+    container.querySelector('#mood-picker .mood-btn[data-mood="4"]').click();
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('#post-add-note')).toBeTruthy();
+      expect(container.querySelector('#post-done')).toBeTruthy();
+      expect(container.querySelector('#post-done').textContent).toBe('Listo');
+    });
+  });
+
+  it('clicking "Listo" hides the add picker', async () => {
+    mockGetMoodsByDate.mockResolvedValue([]);
+    await render(container, '2025-03-15');
+
+    container.querySelector('#day-add').click();
+    container.querySelector('#mood-picker .mood-btn[data-mood="4"]').click();
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('#post-done')).toBeTruthy();
+    });
+
+    container.querySelector('#post-done').click();
+    expect(container.querySelector('#mood-picker').classList.contains('hidden')).toBe(true);
+  });
+
+  it('after saving a note, entry is visible and picker is hidden', async () => {
+    mockGetMoodsByDate.mockResolvedValueOnce([]); // initial render
+    await render(container, '2025-03-15');
+
+    // After add + note save, refreshEntries returns the entry with note
+    mockGetMoodsByDate.mockResolvedValue([
+      { id: 'noted-mood', mood: 4, date: '2025-03-15', timestamp: 6000, time: '16:00', note: 'Test note' },
+    ]);
+
+    container.querySelector('#day-add').click();
+    container.querySelector('#mood-picker .mood-btn[data-mood="4"]').click();
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('#post-add-note')).toBeTruthy();
+    });
+
+    container.querySelector('#post-add-note').click();
+    const textarea = container.querySelector('#day-mood-note');
+    textarea.value = 'Test note';
+    container.querySelector('#day-note-save').click();
+
+    await vi.waitFor(() => {
+      expect(mockToast).toHaveBeenCalledWith('Nota guardada', 'success', 1500);
+    });
+
+    expect(container.querySelectorAll('.day-entry').length).toBe(1);
+    expect(container.querySelector('.entry-note').textContent).toBe('Test note');
+    expect(container.querySelector('#mood-picker').classList.contains('hidden')).toBe(true);
   });
 });
