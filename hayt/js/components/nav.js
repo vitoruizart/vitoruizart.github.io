@@ -2,15 +2,6 @@
 import * as state from '../state.js';
 import { toast } from './toast.js';
 
-function formatRelativeTime(ms) {
-  if (!ms) return null;
-  const diff = Math.floor((Date.now() - ms) / 1000);
-  if (diff < 30) return 'ahora';
-  if (diff < 180) return 'hace un momento';
-  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`;
-  return `hace ${Math.floor(diff / 3600)}h`;
-}
-
 export function renderNav(container) {
   container.innerHTML = `
     <nav class="top-nav">
@@ -26,7 +17,6 @@ export function renderNav(container) {
           </svg>
           <span class="sync-dot" id="sync-dot"></span>
         </button>
-        <span class="sync-time" id="sync-time"></span>
         <button class="nav-btn" id="nav-settings" aria-label="Settings" title="Ajustes">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <circle cx="12" cy="12" r="3"/>
@@ -60,11 +50,4 @@ export function renderNav(container) {
     else if (status === 'pending') dot.classList.add('sync-pending');
   });
 
-  // Last synced timestamp
-  state.on('lastSyncAt', ts => {
-    const el = document.getElementById('sync-time');
-    if (!el) return;
-    const text = formatRelativeTime(ts);
-    el.textContent = text ?? '';
-  });
 }

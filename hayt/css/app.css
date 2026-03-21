@@ -135,12 +135,6 @@ body {
   background: #F39C12;
 }
 
-.sync-time {
-  font-size: 10px;
-  color: var(--text-muted);
-  align-self: center;
-}
-
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
