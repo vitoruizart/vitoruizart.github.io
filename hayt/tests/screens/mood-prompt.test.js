@@ -67,6 +67,15 @@ describe('mood-prompt screen', () => {
     expect(buttons.length).toBe(5);
   });
 
+  it('renders a close button that navigates to calendar', () => {
+    render(container);
+    const closeBtn = container.querySelector('#prompt-close');
+    expect(closeBtn).toBeTruthy();
+    expect(closeBtn.getAttribute('aria-label')).toBe('Cerrar');
+    closeBtn.click();
+    expect(location.hash).toBe('#calendar');
+  });
+
   it('clicking mood button immediately calls putMood', async () => {
     render(container);
     const btn = container.querySelector('.mood-btn[data-mood="4"]');

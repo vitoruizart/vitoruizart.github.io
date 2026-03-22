@@ -18,6 +18,9 @@ export function render(container) {
 
   container.innerHTML = `
     <div class="mood-prompt">
+      <button class="prompt-close-btn" id="prompt-close" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
       <h1 class="prompt-title">¿Cómo estás hoy?</h1>
       <div class="mood-grid">
         ${MOODS.map(m => `
@@ -29,6 +32,10 @@ export function render(container) {
       </div>
       <div id="mood-post-save"></div>
     </div>`;
+
+  container.querySelector('#prompt-close').addEventListener('click', () => {
+    location.hash = '#calendar';
+  });
 
   container.querySelectorAll('.mood-btn').forEach(btn => {
     btn.addEventListener('click', () => {

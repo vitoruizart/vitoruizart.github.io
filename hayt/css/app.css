@@ -137,6 +137,7 @@ body {
 
 /* --- Mood Prompt --- */
 .mood-prompt {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -144,6 +145,24 @@ body {
   min-height: calc(100dvh - 60px - var(--safe-top));
   padding: 24px 16px;
 }
+
+.prompt-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+.prompt-close-btn:active { opacity: 0.5; }
 
 .prompt-title {
   font-size: 28px;
