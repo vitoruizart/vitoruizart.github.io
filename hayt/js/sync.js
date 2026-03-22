@@ -163,11 +163,23 @@ export async function syncNow(manual = false) {
 
     // Also reconcile from snapshot (catches compaction gaps)
     if (snapshotData?.moods) {
+      // Gather IDs pending deletion (local + foreign) so snapshot
+      // reconciliation does not re-insert them.
+      const localChangeEntries = await getAllChangeEntries();
+      const pendingDeleteIds = new Set();
+      for (const entry of localChangeEntries) {
+        if (entry.operation === 'delete') pendingDeleteIds.add(entry.entityId);
+      }
+      for (const entry of foreignEntries) {
+        if (entry.operation === 'delete') pendingDeleteIds.add(entry.entityId);
+      }
+
       const localMoods = new Map((await getAllMoods()).map(m => [m.id, m]));
       for (const remoteMood of snapshotData.moods) {
         try {
           const decrypted = await decryptEntity(encKey, remoteMood);
           if (!isValidMood(decrypted)) continue;
+          if (pendingDeleteIds.has(decrypted.id)) continue;
           if (!localMoods.has(decrypted.id)) {
             await putMood(decrypted);
           } else {

@@ -384,6 +384,99 @@ describe('syncNow integration', () => {
     expect(stateValues.syncStatus).toBe('error');
   });
 
+  it('snapshot reconciliation does not re-insert locally deleted moods', async () => {
+    setCredentials();
+
+    const salt = crypto.generateSalt();
+    const key = await crypto.deriveKey('test-pass', salt);
+    const verifier = await crypto.createVerifier(key);
+
+    // Mood that was deleted locally — pending changelog entry exists
+    const deletedMood = { id: 'mood-to-delete', mood: 3, date: '2025-04-01', timestamp: 1000 };
+    const encDeletedMood = await crypto.encryptEntity(key, deletedMood);
+
+    await db.addChangeEntry({
+      id: 'delete-ch-1',
+      timestamp: 2000,
+      entityType: 'mood',
+      entityId: 'mood-to-delete',
+      operation: 'delete',
+      deviceId: lsStore.get('hayt-device-id') || 'test-device',
+    });
+
+    // Remote snapshot still has the mood (not yet compacted)
+    const snapshot = {
+      syncVersion: 1,
+      encryptionSalt: salt,
+      encryptionVerifier: verifier,
+      moods: [encDeletedMood],
+    };
+
+    mockGetFile.mockImplementation((_pat, _repo, path) => {
+      if (path.includes('snapshot')) {
+        return { data: JSON.stringify(snapshot), sha: 'snap-sha' };
+      }
+      if (path.includes('changelog')) {
+        return { data: '[]', sha: 'cl-sha' };
+      }
+      return null;
+    });
+
+    mockPutFile.mockResolvedValue('new-sha');
+
+    await syncNow();
+
+    const mood = await db.getMood('mood-to-delete');
+    expect(mood).toBeUndefined();
+    expect(stateValues.syncStatus).toBe('idle');
+  });
+
+  it('snapshot reconciliation does not re-insert moods deleted by foreign device', async () => {
+    setCredentials();
+
+    const salt = crypto.generateSalt();
+    const key = await crypto.deriveKey('test-pass', salt);
+    const verifier = await crypto.createVerifier(key);
+
+    const deletedMood = { id: 'foreign-deleted', mood: 2, date: '2025-04-02', timestamp: 1000 };
+    const encDeletedMood = await crypto.encryptEntity(key, deletedMood);
+
+    // Snapshot still has the mood
+    const snapshot = {
+      syncVersion: 1,
+      encryptionSalt: salt,
+      encryptionVerifier: verifier,
+      moods: [encDeletedMood],
+    };
+
+    // Remote changelog has a delete from another device
+    const changelog = [{
+      id: 'foreign-del-ch',
+      deviceId: 'other-device',
+      entityId: 'foreign-deleted',
+      timestamp: 2000,
+      operation: 'delete',
+    }];
+
+    mockGetFile.mockImplementation((_pat, _repo, path) => {
+      if (path.includes('snapshot')) {
+        return { data: JSON.stringify(snapshot), sha: 'snap-sha' };
+      }
+      if (path.includes('changelog')) {
+        return { data: JSON.stringify(changelog), sha: 'cl-sha' };
+      }
+      return null;
+    });
+
+    mockPutFile.mockResolvedValue('new-sha');
+
+    await syncNow();
+
+    const mood = await db.getMood('foreign-deleted');
+    expect(mood).toBeUndefined();
+    expect(stateValues.syncStatus).toBe('idle');
+  });
+
   it('sets error on wrong password', async () => {
     setCredentials();
 
