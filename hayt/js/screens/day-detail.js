@@ -8,7 +8,11 @@ import { toast } from '../components/toast.js';
 import { getDeviceId } from '../sync.js';
 import * as state from '../state.js';
 
+let cleanupListener = null;
+
 export async function render(container, dateStr) {
+  if (cleanupListener) cleanupListener();
+
   const entries = await getMoodsByDate(dateStr);
   entries.sort((a, b) => a.timestamp - b.timestamp);
 
@@ -85,6 +89,13 @@ export async function render(container, dateStr) {
     picker.querySelectorAll('.mood-btn').forEach(mbtn => {
       mbtn.onclick = () => addMoodForDay(container, dateStr, parseInt(mbtn.dataset.mood, 10));
     });
+  });
+
+  // Re-render entries on foreign sync changes
+  cleanupListener = state.on('moodsUpdated', () => {
+    if (container.querySelector('.day-detail')) {
+      refreshEntries(container, dateStr);
+    }
   });
 }
 
