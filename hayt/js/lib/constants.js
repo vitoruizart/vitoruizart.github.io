@@ -26,7 +26,7 @@ export const BACKUP_RATE_LIMIT_MIN = 8;
 
 // Prompt
 export const DEFAULT_PROMPT_HOURS = 8;
-export const APP_VERSION = '20260322.1441';
+export const APP_VERSION = '20260322.1513';
 
 export function getPromptCooldownMs() {
   const stored = localStorage.getItem('hayt-prompt-hours');

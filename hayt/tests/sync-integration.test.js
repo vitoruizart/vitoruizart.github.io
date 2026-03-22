@@ -531,6 +531,49 @@ describe('syncNow integration', () => {
     expect(stateValues.syncStatus).toBe('idle');
   });
 
+  it('tombstones prevent re-insertion after compaction clears changelog', async () => {
+    setCredentials();
+
+    const salt = crypto.generateSalt();
+    const key = await crypto.deriveKey('test-pass', salt);
+    const verifier = await crypto.createVerifier(key);
+
+    // Simulate: mood was deleted and tombstone persists,
+    // but both local and remote changelogs are empty (compaction cleared them).
+    const deletedMood = { id: 'tombstoned-mood', mood: 3, date: '2025-04-04', timestamp: 1000 };
+    const encDeletedMood = await crypto.encryptEntity(key, deletedMood);
+
+    // Add tombstone (persists across sync cycles and compaction)
+    await db.addTombstone('tombstoned-mood');
+
+    // Remote changelog is empty (compacted) but snapshot still has the mood
+    const snapshot = {
+      syncVersion: 1,
+      encryptionSalt: salt,
+      encryptionVerifier: verifier,
+      moods: [encDeletedMood],
+    };
+
+    mockGetFile.mockImplementation((_pat, _repo, path) => {
+      if (path.includes('snapshot')) {
+        return { data: JSON.stringify(snapshot), sha: 'snap-sha' };
+      }
+      if (path.includes('changelog')) {
+        return { data: '[]', sha: 'cl-sha' };
+      }
+      return null;
+    });
+
+    mockPutFile.mockResolvedValue('new-sha');
+
+    await syncNow();
+
+    // Tombstone should prevent re-insertion even with empty changelog
+    const mood = await db.getMood('tombstoned-mood');
+    expect(mood).toBeUndefined();
+    expect(stateValues.syncStatus).toBe('idle');
+  });
+
   it('sets error on wrong password', async () => {
     setCredentials();
 

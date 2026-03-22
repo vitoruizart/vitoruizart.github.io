@@ -117,6 +117,26 @@ export async function deleteChangeEntries(ids) {
   for (const id of ids) await promisify(stores[0].delete(id));
 }
 
+// --- Tombstones (persistent delete markers) ---
+
+export async function getTombstones() {
+  const record = await getMeta('tombstones');
+  return new Set(record?.ids ?? []);
+}
+
+export async function addTombstone(moodId) {
+  const record = await getMeta('tombstones');
+  const ids = record?.ids ?? [];
+  if (!ids.includes(moodId)) ids.push(moodId);
+  return setMeta('tombstones', { ids });
+}
+
+export async function clearTombstones(idsToRemove) {
+  const record = await getMeta('tombstones');
+  const ids = (record?.ids ?? []).filter(id => !idsToRemove.includes(id));
+  return setMeta('tombstones', { ids });
+}
+
 // --- Meta ---
 
 export async function getMeta(key) {

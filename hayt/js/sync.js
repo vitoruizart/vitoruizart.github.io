@@ -10,7 +10,7 @@ import {
 import {
   getAllMoods, putMood, deleteMood as dbDeleteMood,
   addChangeEntry, getAllChangeEntries, clearChangeEntries,
-  getMeta, setMeta,
+  getMeta, setMeta, getTombstones, addTombstone, clearTombstones,
 } from './db.js';
 import {
   SNAPSHOT_FILE, CHANGELOG_FILE, SYNC_VERSION, COMPACTION_THRESHOLD, POLL_INTERVAL_MS,
@@ -163,10 +163,11 @@ export async function syncNow(manual = false) {
 
     // Also reconcile from snapshot (catches compaction gaps)
     if (snapshotData?.moods) {
-      // Gather IDs pending deletion (local + foreign) so snapshot
+      // Gather IDs pending deletion from all sources so snapshot
       // reconciliation does not re-insert them.
       const localChangeEntries = await getAllChangeEntries();
-      const pendingDeleteIds = new Set();
+      const tombstones = await getTombstones();
+      const pendingDeleteIds = new Set(tombstones);
       for (const entry of localChangeEntries) {
         if (entry.operation === 'delete') pendingDeleteIds.add(entry.entityId);
       }
@@ -200,6 +201,7 @@ export async function syncNow(manual = false) {
       for (const entry of foreignEntries) {
         if (entry.operation === 'delete') {
           await dbDeleteMood(entry.entityId);
+          await addTombstone(entry.entityId);
         } else if (entry.data) {
           if (!isValidMood(entry.data)) continue;
           const localMood = localMoodsMap.get(entry.entityId);
@@ -264,6 +266,15 @@ export async function syncNow(manual = false) {
     const totalEntries = remoteEntries.length + localEntries.length;
     if (totalEntries >= COMPACTION_THRESHOLD) {
       await compact(creds, encKey, snapshotSha, changelogSha, signal);
+      // Clean up tombstones for moods no longer in local DB (safe after compaction)
+      try {
+        const ts = await getTombstones();
+        if (ts.size > 0) {
+          const currentIds = new Set((await getAllMoods()).map(m => m.id));
+          const safeToRemove = [...ts].filter(id => !currentIds.has(id));
+          if (safeToRemove.length > 0) await clearTombstones(safeToRemove);
+        }
+      } catch { /* non-critical */ }
     }
 
     // Update sync metadata

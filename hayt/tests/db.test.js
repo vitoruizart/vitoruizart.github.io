@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto';
 import {
   putMood, getMood, deleteMood, getMoodsByDate, getAllMoods, getRecentMoods,
   addChangeEntry, getAllChangeEntries, clearChangeEntries, deleteChangeEntries,
-  getMeta, setMeta,
+  getMeta, setMeta, getTombstones, addTombstone, clearTombstones,
   DB_VERSION, MIGRATIONS,
 } from '../js/db.js';
 
@@ -146,5 +146,37 @@ describe('meta', () => {
   it('getMeta returns undefined for missing key', async () => {
     const result = await getMeta('nonexistent-meta');
     expect(result).toBeUndefined();
+  });
+});
+
+describe('tombstones', () => {
+  it('getTombstones returns empty set when none exist', async () => {
+    const ts = await getTombstones();
+    expect(ts.size).toBe(0);
+  });
+
+  it('addTombstone persists and is retrievable', async () => {
+    await addTombstone('mood-1');
+    await addTombstone('mood-2');
+    const ts = await getTombstones();
+    expect(ts.has('mood-1')).toBe(true);
+    expect(ts.has('mood-2')).toBe(true);
+    expect(ts.size).toBe(2);
+  });
+
+  it('addTombstone does not duplicate', async () => {
+    await addTombstone('mood-dup');
+    await addTombstone('mood-dup');
+    const ts = await getTombstones();
+    expect([...ts].filter(id => id === 'mood-dup').length).toBe(1);
+  });
+
+  it('clearTombstones removes specified IDs', async () => {
+    await addTombstone('keep');
+    await addTombstone('remove');
+    await clearTombstones(['remove']);
+    const ts = await getTombstones();
+    expect(ts.has('keep')).toBe(true);
+    expect(ts.has('remove')).toBe(false);
   });
 });

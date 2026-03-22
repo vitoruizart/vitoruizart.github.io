@@ -3,7 +3,7 @@ import { MOODS } from '../lib/constants.js';
 import { parseDate, toDateStr, toTimeStr } from '../lib/date-utils.js';
 import { getMood as getMoodDef } from '../lib/constants.js';
 import { moodFaceSvg } from '../components/mood-faces.js';
-import { getMoodsByDate, putMood, deleteMood as dbDeleteMood, addChangeEntry } from '../db.js';
+import { getMoodsByDate, putMood, deleteMood as dbDeleteMood, addChangeEntry, addTombstone } from '../db.js';
 import { toast } from '../components/toast.js';
 import { getDeviceId } from '../sync.js';
 import * as state from '../state.js';
@@ -116,6 +116,7 @@ function attachEntryHandlers(container, dateStr, entries) {
       const id = btn.dataset.id;
       try {
         await dbDeleteMood(id);
+        await addTombstone(id);
         await addChangeEntry({
           id: crypto.randomUUID(),
           timestamp: Date.now(),
