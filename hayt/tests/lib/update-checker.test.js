@@ -36,7 +36,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-const { checkForUpdate } = await import('../../js/lib/update-checker.js');
+const { checkForUpdate, startUpdatePolling } = await import('../../js/lib/update-checker.js');
 const { APP_VERSION } = await import('../../js/lib/constants.js');
 
 describe('checkForUpdate', () => {
@@ -157,5 +157,62 @@ describe('checkForUpdate', () => {
     });
     await checkForUpdate();
     expect(lsStore.has('hayt-applied-version')).toBe(false);
+  });
+});
+
+describe('background update check', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ version: APP_VERSION }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('forces update check when returning from 30+ min background', async () => {
+    startUpdatePolling();
+    // Clear fetch calls from initial check
+    await vi.advanceTimersByTimeAsync(0);
+    fetchMock.mockClear();
+
+    // Simulate going to background
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    // Advance 31 minutes
+    vi.advanceTimersByTime(31 * 60 * 1000);
+
+    // Simulate returning to foreground
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it('does not force check when returning from short background', async () => {
+    startUpdatePolling();
+    await vi.advanceTimersByTimeAsync(0);
+    fetchMock.mockClear();
+
+    // Simulate going to background
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    // Advance only 5 minutes (within debounce window from startup)
+    vi.advanceTimersByTime(5 * 60 * 1000);
+
+    // Simulate returning to foreground
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    await vi.advanceTimersByTimeAsync(0);
+    // Should be debounced (only 5 min since startup check)
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

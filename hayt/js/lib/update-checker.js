@@ -5,7 +5,9 @@ import { APP_VERSION } from './constants.js';
 
 const POLL_INTERVAL_MS = 30 * 60 * 1000;     // 30 minutes periodic
 const MIN_CHECK_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes debounce on focus/visibility
+const BG_CHECK_THRESHOLD_MS = 30 * 60 * 1000; // force check after 30 min in background
 let lastCheckTime = 0;
+let hiddenAt = 0;
 
 async function checkForUpdate() {
   try {
@@ -47,7 +49,18 @@ export function startUpdatePolling() {
 
   // Foreground detection — check when user returns to the app
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') debouncedCheck();
+    if (document.visibilityState === 'hidden') {
+      hiddenAt = Date.now();
+    } else if (document.visibilityState === 'visible') {
+      if (hiddenAt > 0 && Date.now() - hiddenAt >= BG_CHECK_THRESHOLD_MS) {
+        hiddenAt = 0;
+        lastCheckTime = Date.now();
+        checkForUpdate();
+      } else {
+        hiddenAt = 0;
+        debouncedCheck();
+      }
+    }
   });
   window.addEventListener('focus', debouncedCheck);
 }
