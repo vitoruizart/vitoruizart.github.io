@@ -170,7 +170,7 @@ export async function syncNow(manual = false) {
       for (const entry of localChangeEntries) {
         if (entry.operation === 'delete') pendingDeleteIds.add(entry.entityId);
       }
-      for (const entry of foreignEntries) {
+      for (const entry of remoteEntries) {
         if (entry.operation === 'delete') pendingDeleteIds.add(entry.entityId);
       }
 

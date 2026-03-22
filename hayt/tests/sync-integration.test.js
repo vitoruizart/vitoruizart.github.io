@@ -477,6 +477,60 @@ describe('syncNow integration', () => {
     expect(stateValues.syncStatus).toBe('idle');
   });
 
+  it('snapshot reconciliation does not re-insert moods deleted in a previous sync cycle', async () => {
+    setCredentials();
+
+    const salt = crypto.generateSalt();
+    const key = await crypto.deriveKey('test-pass', salt);
+    const verifier = await crypto.createVerifier(key);
+
+    // Mood that was deleted and pushed in a previous sync cycle.
+    // Local changelog is now empty (cleared after push),
+    // but the remote changelog still has our own delete entry.
+    const deletedMood = { id: 'prev-deleted', mood: 3, date: '2025-04-03', timestamp: 1000 };
+    const encDeletedMood = await crypto.encryptEntity(key, deletedMood);
+
+    const deviceId = lsStore.get('hayt-device-id') || 'test-device';
+    // Ensure device ID is set
+    lsStore.set('hayt-device-id', deviceId);
+
+    // Remote changelog has OUR OWN delete entry (from previous push)
+    const changelog = [{
+      id: 'own-del-ch',
+      deviceId,
+      entityId: 'prev-deleted',
+      timestamp: 2000,
+      operation: 'delete',
+    }];
+
+    // Snapshot still has the mood (no compaction yet)
+    const snapshot = {
+      syncVersion: 1,
+      encryptionSalt: salt,
+      encryptionVerifier: verifier,
+      moods: [encDeletedMood],
+    };
+
+    mockGetFile.mockImplementation((_pat, _repo, path) => {
+      if (path.includes('snapshot')) {
+        return { data: JSON.stringify(snapshot), sha: 'snap-sha' };
+      }
+      if (path.includes('changelog')) {
+        return { data: JSON.stringify(changelog), sha: 'cl-sha' };
+      }
+      return null;
+    });
+
+    mockPutFile.mockResolvedValue('new-sha');
+
+    await syncNow();
+
+    // Mood should NOT be re-inserted from snapshot
+    const mood = await db.getMood('prev-deleted');
+    expect(mood).toBeUndefined();
+    expect(stateValues.syncStatus).toBe('idle');
+  });
+
   it('sets error on wrong password', async () => {
     setCredentials();
 
