@@ -1,8 +1,9 @@
-import { getState, patchUi, patchPlacement, setPlacement, patchRoom, resetPlacement, subscribe } from '../state.js';
+import { getState, setState, patchUi, patchPlacement, setPlacement, patchRoom, resetPlacement, subscribe, defaultPlacement } from '../state.js';
 import { toCssTransform, paintingPreviewSize, clampPlacement } from '../lib/transform.js';
 import { attachGestures } from '../lib/gestures.js';
 import { mountTiltPanel } from '../components/tilt-panel.js';
 import { showToast } from '../components/toast.js';
+import { clearDraft } from '../lib/drafts.js';
 
 let detachGestures = null;
 let stageObserver = null;
@@ -34,7 +35,8 @@ export function mountEdit(root) {
         <button id="back">‹</button>
         <div class="spacer"></div>
         ${isPhoto ? '<button id="reset">Reset</button>' : ''}
-        <button id="export-btn">Compartir</button>
+        <button id="restart" class="topbar-action danger">Nuevo</button>
+        <button id="export-btn" class="topbar-action primary">Compartir</button>
       </div>
       <div class="editor-tray">
         <div class="tray-tabs">
@@ -42,7 +44,7 @@ export function mountEdit(root) {
           ${isPhoto ? '<button class="tray-tab" data-tab="size">Tamaño</button>' : ''}
           ${isPhoto ? '<button class="tray-tab" data-tab="tilt">Inclinar</button>' : ''}
           ${isMat ? '<button class="tray-tab" data-tab="fondo">Fondo</button>' : ''}
-          <button class="tray-tab" data-tab="room">${isPhoto ? 'Habitación' : 'Fondo'}</button>
+          <button class="tray-tab" data-tab="room">${isPhoto ? 'Habitación' : 'Cambiar'}</button>
         </div>
         <div class="tray-content" id="tray"></div>
       </div>
@@ -73,6 +75,12 @@ export function mountEdit(root) {
     });
   }
   root.querySelector('#export-btn').addEventListener('click', () => patchUi({ screen: 'export' }));
+  root.querySelector('#restart').addEventListener('click', async () => {
+    if (!confirm('¿Descartar el trabajo actual y empezar de cero?')) return;
+    await clearDraft();
+    setState({ painting: null, frame: null, room: null, placement: defaultPlacement() });
+    patchUi({ screen: 'pick-painting' });
+  });
 
   // Tab switching.
   const tabs = root.querySelectorAll('.tray-tab');

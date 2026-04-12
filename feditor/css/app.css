@@ -317,6 +317,27 @@ input[type="range"] {
   min-height: 44px;
 }
 .editor-topbar .spacer { flex: 1; }
+.editor-topbar .topbar-action {
+  padding: 8px 14px;
+  margin-left: 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 14px;
+  min-height: 40px;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+.editor-topbar .topbar-action.primary {
+  background: var(--accent);
+  color: #1a1a1a;
+}
+.editor-topbar .topbar-action.primary:active { background: var(--accent-pressed); }
+.editor-topbar .topbar-action.danger {
+  background: rgba(212, 86, 76, 0.12);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+.editor-topbar .topbar-action.danger:active { background: rgba(212, 86, 76, 0.28); }
 
 .slider-row {
   display: flex;
