@@ -1,44 +1,38 @@
 // @vitest-environment happy-dom
-import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { checkForUpdate } from '../../js/lib/update-checker.js';
-
-beforeEach(() => {
-  localStorage.clear();
-});
+import { APP_VERSION } from '../../js/lib/constants.js';
 
 describe('checkForUpdate', () => {
-  it('first run records the version without calling onAvailable', async () => {
+  it('does not call onAvailable when server version matches APP_VERSION', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ version: '1.0.0' })
+      json: async () => ({ version: APP_VERSION })
     });
     const onAvailable = vi.fn();
     await checkForUpdate({ onAvailable });
     expect(onAvailable).not.toHaveBeenCalled();
-    expect(localStorage.getItem('feditor:version')).toBe('1.0.0');
   });
 
-  it('calls onAvailable when version changes', async () => {
-    localStorage.setItem('feditor:version', '1.0.0');
+  it('calls onAvailable when server version differs from APP_VERSION', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ version: '1.0.1' })
+      json: async () => ({ version: APP_VERSION + '-next' })
     });
     const onAvailable = vi.fn();
     await checkForUpdate({ onAvailable });
-    expect(onAvailable).toHaveBeenCalledWith('1.0.1');
-    expect(localStorage.getItem('feditor:version')).toBe('1.0.1');
+    expect(onAvailable).toHaveBeenCalledWith(APP_VERSION + '-next');
   });
 
-  it('does not call onAvailable when version unchanged', async () => {
-    localStorage.setItem('feditor:version', '1.0.0');
+  it('re-fires on every mismatch (stateless) so a blocking modal reappears', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ version: '1.0.0' })
+      json: async () => ({ version: APP_VERSION + '-next' })
     });
     const onAvailable = vi.fn();
     await checkForUpdate({ onAvailable });
-    expect(onAvailable).not.toHaveBeenCalled();
+    await checkForUpdate({ onAvailable });
+    expect(onAvailable).toHaveBeenCalledTimes(2);
   });
 
   it('swallows network errors silently', async () => {

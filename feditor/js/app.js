@@ -8,7 +8,7 @@ import { loadDraft, scheduleDraftSave, clearDraft } from './lib/drafts.js';
 import { loadBitmap, downscaleBitmap, naturalSize } from './lib/image-io.js';
 import { maybeShowInstallHint } from './lib/install-hint.js';
 import { checkForUpdate } from './lib/update-checker.js';
-import { showToast } from './components/toast.js';
+import { showUpdateModal } from './components/update-modal.js';
 
 const root = document.getElementById('app');
 let currentScreen = null;
@@ -70,5 +70,15 @@ subscribe((s) => {
     render();
   }
   maybeShowInstallHint();
-  checkForUpdate({ onAvailable: () => showToast('Nueva versión disponible — recarga para actualizar', 4000) });
+  checkForUpdate({ onAvailable: () => showUpdateModal() });
 })();
+
+// Installed PWAs rarely navigate or reload — they resume from the
+// home-screen icon, which keeps the old SW session alive. Re-check for
+// updates whenever the app regains focus so a user returning after a
+// deploy lands on the blocking modal within seconds of opening the app.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    checkForUpdate({ onAvailable: () => showUpdateModal() });
+  }
+});

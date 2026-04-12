@@ -1,4 +1,4 @@
-const CACHE_NAME = 'feditor-v1';
+const CACHE_NAME = 'feditor-v2';
 const CORE_ASSETS = [
   './',
   'index.html',
@@ -17,6 +17,7 @@ const CORE_ASSETS = [
   'js/components/strip-cropper.js',
   'js/components/tilt-panel.js',
   'js/components/toast.js',
+  'js/components/update-modal.js',
   'js/lib/transform.js',
   'js/lib/gestures.js',
   'js/lib/image-io.js',
@@ -47,20 +48,54 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+self.addEventListener('message', (event) => {
+  if (!event.data) return;
+  if (event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  } else if (event.data.type === 'CLEAR_CACHES') {
+    event.waitUntil(
+      caches.keys().then((names) => Promise.all(names.map((n) => caches.delete(n))))
+    );
+  }
+});
+
+// Code and markup are served network-first so a new deploy is picked up on
+// the very next online load. Bundled static assets (icons, pre-shipped frame
+// and room images) stay cache-first — they change rarely and the cache-name
+// bump flushes them when they do.
+function isStaticAsset(url) {
+  return url.pathname.includes('/icons/') ||
+         url.pathname.includes('/assets/frames/') ||
+         url.pathname.includes('/assets/rooms/');
+}
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET') return;
+  if (url.origin !== self.location.origin) return;
   if (url.pathname.endsWith('/version.json')) return;
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((res) => {
-        if (res.ok && url.origin === self.location.origin) {
+
+  if (isStaticAsset(url)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => cached || fetch(event.request).then((res) => {
+        if (res.ok) {
           const copy = res.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         }
         return res;
-      }).catch(() => cached);
-    })
+      }))
+    );
+    return;
+  }
+
+  // Network-first for code/markup, fall back to cache when offline.
+  event.respondWith(
+    fetch(event.request).then((res) => {
+      if (res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+      }
+      return res;
+    }).catch(() => caches.match(event.request))
   );
 });

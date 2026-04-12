@@ -43,8 +43,7 @@ export function mountEdit(root) {
           <button class="tray-tab active" data-tab="frame">Marco</button>
           ${isPhoto ? '<button class="tray-tab" data-tab="size">Tamaño</button>' : ''}
           ${isPhoto ? '<button class="tray-tab" data-tab="tilt">Inclinar</button>' : ''}
-          ${isMat ? '<button class="tray-tab" data-tab="fondo">Fondo</button>' : ''}
-          <button class="tray-tab" data-tab="room">${isPhoto ? 'Habitación' : 'Cambiar'}</button>
+          <button class="tray-tab" data-tab="room">${isPhoto ? 'Habitación' : 'Fondo'}</button>
         </div>
         <div class="tray-content" id="tray"></div>
       </div>
@@ -258,13 +257,23 @@ function renderTray(tray, tab) {
   } else if (tab === 'tilt') {
     tray.classList.add('column');
     mountTiltPanel(tray, () => getState().placement, (patch) => patchPlacement(patch));
-  } else if (tab === 'fondo') {
-    renderFondoTab(tray);
   } else if (tab === 'room') {
-    tray.classList.remove('column');
-    const label = isPhoto ? 'Cambiar habitación' : 'Cambiar fondo';
-    addBtn(tray, label, () => patchUi({ screen: 'pick-room' }));
-    addBtn(tray, 'Cambiar cuadro', () => patchUi({ screen: 'pick-painting' }));
+    if (kind === 'mat') {
+      // Mat mode exposes the color/padding editor inline, plus the same
+      // nav buttons everybody else gets.
+      renderFondoTab(tray);
+      const row = document.createElement('div');
+      row.className = 'slider-row';
+      row.style.gap = '8px';
+      tray.appendChild(row);
+      addBtn(row, 'Cambiar fondo', () => patchUi({ screen: 'pick-room' }));
+      addBtn(row, 'Cambiar cuadro', () => patchUi({ screen: 'pick-painting' }));
+    } else {
+      tray.classList.remove('column');
+      const label = isPhoto ? 'Cambiar habitación' : 'Cambiar fondo';
+      addBtn(tray, label, () => patchUi({ screen: 'pick-room' }));
+      addBtn(tray, 'Cambiar cuadro', () => patchUi({ screen: 'pick-painting' }));
+    }
   }
 }
 
