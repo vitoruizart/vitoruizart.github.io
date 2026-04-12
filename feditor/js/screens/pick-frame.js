@@ -1,8 +1,9 @@
-import { setState, patchUi, getState } from '../state.js';
+import { setState, patchUi, getState, defaultPlacement } from '../state.js';
 import { loadBitmap } from '../lib/image-io.js';
 import { showToast } from '../components/toast.js';
 import { getAll, put, del } from '../db.js';
 import { openStripCropper } from '../components/strip-cropper.js';
+import { clearDraft } from '../lib/drafts.js';
 import { attachLongPressDelete } from './pick-room.js';
 
 export async function mountPickFrame(root) {
@@ -15,6 +16,9 @@ export async function mountPickFrame(root) {
       </div>
       <div class="screen-body">
         <div class="thumb-grid" id="grid"></div>
+        <div style="display:flex; justify-content:center; padding:16px 0 8px;">
+          <button class="ghost" id="restart">Empezar de nuevo</button>
+        </div>
       </div>
       <input id="file-frame" type="file" accept="image/*" hidden>
     </div>
@@ -26,6 +30,12 @@ export async function mountPickFrame(root) {
   root.querySelector('.skip').addEventListener('click', () => {
     setState({ frame: null });
     patchUi({ screen: nextScreen() });
+  });
+  root.querySelector('#restart').addEventListener('click', async () => {
+    if (!confirm('¿Descartar el trabajo actual y empezar de cero?')) return;
+    await clearDraft();
+    setState({ painting: null, frame: null, room: null, placement: defaultPlacement() });
+    patchUi({ screen: 'pick-painting' });
   });
 
   const grid = root.querySelector('#grid');
