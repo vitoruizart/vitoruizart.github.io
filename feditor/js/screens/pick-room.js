@@ -1,5 +1,5 @@
 import { setState, patchUi, getState } from '../state.js';
-import { loadBitmap, downscaleBitmap, naturalSize, bitmapToBlob } from '../lib/image-io.js';
+import { loadBitmap, downscaleBitmap } from '../lib/image-io.js';
 import { showToast } from '../components/toast.js';
 import { getAll, put, del } from '../db.js';
 
@@ -16,6 +16,7 @@ export async function mountPickRoom(root) {
       </div>
       <input id="file-room-lib" type="file" accept="image/*" hidden>
       <input id="file-room-cam" type="file" accept="image/*" capture="environment" hidden>
+      <input id="color-room" type="color" value="#f4eee3" hidden>
     </div>
   `;
 
@@ -33,13 +34,13 @@ export async function mountPickRoom(root) {
     try {
       const original = await loadBitmap(file);
       const bm = await downscaleBitmap(original);
-      const { naturalW, naturalH } = naturalSize(bm);
-      // Re-encode the downscaled bitmap to a JPEG blob for storage (smaller + EXIF-flat).
-      const storeBlob = await bitmapToBlob(bm, 'image/jpeg', 0.9);
+      const naturalW = original.width;
+      const naturalH = original.height;
       const id = 'room-' + Date.now();
       const name = defaultRoomName();
-      await put('rooms', { id, name, blob: storeBlob, width: naturalW, height: naturalH, createdAt: Date.now() });
-      setState({ room: { kind: 'user', id, bitmap: bm, blob: storeBlob, naturalW, naturalH } });
+      // Preserve the original file blob unmodified — no import-time re-encode.
+      await put('rooms', { id, name, blob: file, width: naturalW, height: naturalH, createdAt: Date.now() });
+      setState({ room: { kind: 'user', id, bitmap: bm, blob: file, naturalW, naturalH } });
       showToast('Habitación guardada');
       patchUi({ screen: 'edit' });
     } catch (err) {
@@ -49,12 +50,21 @@ export async function mountPickRoom(root) {
   };
   root.querySelector('#file-room-lib').addEventListener('change', handler);
   root.querySelector('#file-room-cam').addEventListener('change', handler);
+
+  const colorInput = root.querySelector('#color-room');
+  colorInput.addEventListener('change', () => {
+    const color = colorInput.value;
+    setState({ room: { kind: 'mat', color, padH: 0.10, padV: 0.10, lockPad: true } });
+    patchUi({ screen: 'edit' });
+  });
 }
 
 async function renderGrid(grid, root) {
   grid.innerHTML = '';
   const bundled = await loadBundled();
   const userRooms = await safeGetAll('rooms');
+  grid.appendChild(makeNoBgThumb());
+  grid.appendChild(makeSolidColorThumb(root.querySelector('#color-room')));
   for (const r of bundled) grid.appendChild(makeBundledThumb(r));
   grid.appendChild(makeUploadThumb('library', root.querySelector('#file-room-lib')));
   grid.appendChild(makeUploadThumb('camera', root.querySelector('#file-room-cam')));
@@ -84,8 +94,10 @@ function makeBundledThumb(r) {
     try {
       const res = await fetch('assets/rooms/' + r.file);
       const blob = await res.blob();
-      const bm = await downscaleBitmap(await loadBitmap(blob));
-      const { naturalW, naturalH } = naturalSize(bm);
+      const original = await loadBitmap(blob);
+      const bm = await downscaleBitmap(original);
+      const naturalW = original.width;
+      const naturalH = original.height;
       setState({ room: { kind: 'bundled', id: r.id, bitmap: bm, blob, naturalW, naturalH } });
       patchUi({ screen: 'edit' });
     } catch {
@@ -108,8 +120,10 @@ function makeUserThumb(r, onChange) {
   `;
   el.addEventListener('click', async (e) => {
     if (e.target.closest('.thumb-delete')) return;
-    const bm = await downscaleBitmap(await loadBitmap(r.blob));
-    const { naturalW, naturalH } = naturalSize(bm);
+    const original = await loadBitmap(r.blob);
+    const bm = await downscaleBitmap(original);
+    const naturalW = original.width;
+    const naturalH = original.height;
     setState({ room: { kind: 'user', id: r.id, bitmap: bm, blob: r.blob, naturalW, naturalH } });
     patchUi({ screen: 'edit' });
   });
@@ -124,6 +138,27 @@ function makeUserThumb(r, onChange) {
     deleteRoom();
   });
   attachLongPressDelete(el, deleteRoom);
+  return el;
+}
+
+function makeNoBgThumb() {
+  const el = document.createElement('div');
+  el.className = 'thumb no-bg';
+  el.innerHTML = `<div class="thumb-label">Sin fondo</div>`;
+  el.title = 'Sin fondo — sólo cuadro y marco';
+  el.addEventListener('click', () => {
+    setState({ room: { kind: 'none' } });
+    patchUi({ screen: 'edit' });
+  });
+  return el;
+}
+
+function makeSolidColorThumb(colorInput) {
+  const el = document.createElement('div');
+  el.className = 'thumb solid';
+  el.innerHTML = `<div class="thumb-label">Color sólido</div>`;
+  el.title = 'Fondo de color sólido';
+  el.addEventListener('click', () => colorInput.click());
   return el;
 }
 

@@ -46,12 +46,20 @@ subscribe((s) => {
     try {
       const bm = await downscaleBitmap(await loadBitmap(draft.paintingBlob));
       const { naturalW, naturalH } = naturalSize(bm);
-      setState({
+      const patch = {
         painting: { blob: draft.paintingBlob, bitmap: bm, naturalW, naturalH },
         placement: draft.placement || getState().placement
-      });
-      // Painting is restored; frame and room must be re-picked, but the
-      // placement (position/scale/rotation/tilt) will carry over to edit.
+      };
+      // Mat/none rooms have no heavy blob — re-hydrate directly from the draft.
+      const r = draft.roomRef;
+      if (r && r.kind === 'mat') {
+        patch.room = { kind: 'mat', color: r.color, padH: r.padH, padV: r.padV, lockPad: r.lockPad };
+      } else if (r && r.kind === 'none') {
+        patch.room = { kind: 'none' };
+      }
+      setState(patch);
+      // Painting is restored; frame must be re-picked. Room is restored only
+      // for mat/none kinds (photo rooms require an IDB lookup we don't do here).
       patchUi({ screen: 'pick-frame' });
     } catch {
       // Stale draft, ignore.

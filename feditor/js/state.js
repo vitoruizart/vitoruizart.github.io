@@ -31,6 +31,11 @@ export function patchPlacement(placementPatch) {
   emit();
 }
 
+export function patchRoom(roomPatch) {
+  state.room = { ...state.room, ...roomPatch };
+  emit();
+}
+
 export function setPlacement(next) {
   state.placement = next;
   emit();

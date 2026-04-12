@@ -31,6 +31,38 @@ describe('drafts', () => {
     expect(got.paintingW).toBe(100);
   });
 
+  it('persists all mat fields in roomRef', async () => {
+    const state = {
+      placement: { tx: 0.5, ty: 0.5, scale: 0.3, rotate: 0, rotateX: 0, rotateY: 0 },
+      frame: null,
+      room: { kind: 'mat', color: '#abcdef', padH: 0.12, padV: 0.08, lockPad: false },
+      painting: { blob: new Blob(['x']), naturalW: 100, naturalH: 80 }
+    };
+    scheduleDraftSave(state, 10);
+    await new Promise((r) => setTimeout(r, 50));
+    const got = await loadDraft();
+    expect(got.roomRef).toEqual({
+      kind: 'mat',
+      color: '#abcdef',
+      padH: 0.12,
+      padV: 0.08,
+      lockPad: false
+    });
+  });
+
+  it('persists kind only for a "none" roomRef', async () => {
+    const state = {
+      placement: { tx: 0.5, ty: 0.5, scale: 0.3, rotate: 0, rotateX: 0, rotateY: 0 },
+      frame: null,
+      room: { kind: 'none' },
+      painting: { blob: new Blob(['x']), naturalW: 100, naturalH: 80 }
+    };
+    scheduleDraftSave(state, 10);
+    await new Promise((r) => setTimeout(r, 50));
+    const got = await loadDraft();
+    expect(got.roomRef).toEqual({ kind: 'none' });
+  });
+
   it('only the last call within the debounce window persists', async () => {
     const base = {
       placement: { tx: 0.5, ty: 0.5, scale: 0.3, rotate: 0, rotateX: 0, rotateY: 0 },

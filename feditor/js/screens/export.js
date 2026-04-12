@@ -42,7 +42,9 @@ export async function mountExport(root) {
       painting: s.painting,
       frame: s.frame ? { stripBitmap: s.frame.stripBitmap, sliceWidth: s.frame.sliceWidth } : null,
       placement: s.placement,
-      frameBorderFrac: s.frame ? (s.frame.borderFrac || 0.06) : 0
+      frameBorderFrac: s.frame ? (s.frame.borderFrac || 0.06) : 0,
+      paintingBlob: s.painting.blob,
+      roomBlob: s.room.blob
     });
     const url = URL.createObjectURL(blob);
     preview.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:contain; background:#000;">`;
@@ -52,14 +54,14 @@ export async function mountExport(root) {
     dlBtn.addEventListener('click', () => {
       const a = document.createElement('a');
       a.href = url;
-      a.download = `feditor-${Date.now()}.jpg`;
+      a.download = `feditor-${Date.now()}.png`;
       document.body.appendChild(a);
       a.click();
       a.remove();
     });
 
     shareBtn.addEventListener('click', async () => {
-      const file = new File([blob], `feditor-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      const file = new File([blob], `feditor-${Date.now()}.png`, { type: 'image/png' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({ files: [file], title: 'Mi cuadro en la habitación' });
