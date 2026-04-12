@@ -1,0 +1,23 @@
+[
+  {
+    "id": "wall-warm-white",
+    "name": "Pared blanca cálida",
+    "file": "wall-warm-white.jpg",
+    "width": 1600,
+    "height": 1067
+  },
+  {
+    "id": "wall-cool-grey",
+    "name": "Pared gris frío",
+    "file": "wall-cool-grey.jpg",
+    "width": 1600,
+    "height": 1067
+  },
+  {
+    "id": "wall-warm-beige",
+    "name": "Pared beige",
+    "file": "wall-warm-beige.jpg",
+    "width": 1600,
+    "height": 1067
+  }
+]
