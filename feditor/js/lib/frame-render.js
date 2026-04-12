@@ -28,31 +28,38 @@ export function drawFrame(ctx, frame, inner) {
   const ow = inner.w + 2 * borderPx;
   const oh = inner.h + 2 * borderPx;
 
+  // Edges overlap 0.5 px into the neighbouring corners on both ends. The
+  // corners are drawn *after* the edges so they override the overlap; this
+  // prevents sub-pixel antialiasing gaps on warped outputs without changing
+  // the visible geometry.
+  const OVER = 0.5;
+
   // Top edge: tile horizontally between corners.
   drawHorizontalEdge(ctx, stripBitmap, slice,
-    ox + borderPx, oy,
-    inner.w, borderPx, 'top');
+    ox + borderPx - OVER, oy,
+    inner.w + 2 * OVER, borderPx, 'top');
 
   // Bottom edge.
   drawHorizontalEdge(ctx, stripBitmap, slice,
-    ox + borderPx, oy + oh - borderPx,
-    inner.w, borderPx, 'bottom');
+    ox + borderPx - OVER, oy + oh - borderPx,
+    inner.w + 2 * OVER, borderPx, 'bottom');
 
   // Left edge.
   drawVerticalEdge(ctx, stripBitmap, slice,
-    ox, oy + borderPx,
-    borderPx, inner.h, 'left');
+    ox, oy + borderPx - OVER,
+    borderPx, inner.h + 2 * OVER, 'left');
 
   // Right edge.
   drawVerticalEdge(ctx, stripBitmap, slice,
-    ox + ow - borderPx, oy + borderPx,
-    borderPx, inner.h, 'right');
+    ox + ow - borderPx, oy + borderPx - OVER,
+    borderPx, inner.h + 2 * OVER, 'right');
 
-  // Corners: use a square crop from the strip end, drawn at each corner.
-  drawCorner(ctx, stripBitmap, slice, ox, oy, borderPx);
-  drawCorner(ctx, stripBitmap, slice, ox + ow - borderPx, oy, borderPx);
-  drawCorner(ctx, stripBitmap, slice, ox, oy + oh - borderPx, borderPx);
-  drawCorner(ctx, stripBitmap, slice, ox + ow - borderPx, oy + oh - borderPx, borderPx);
+  // Corners: pull each destination corner from its matching source corner
+  // so the miter orientation lines up with the adjacent edge.
+  drawCorner(ctx, stripBitmap, 0,          0,          slice, ox,                 oy,                 borderPx);
+  drawCorner(ctx, stripBitmap, sw - slice, 0,          slice, ox + ow - borderPx, oy,                 borderPx);
+  drawCorner(ctx, stripBitmap, 0,          sh - slice, slice, ox,                 oy + oh - borderPx, borderPx);
+  drawCorner(ctx, stripBitmap, sw - slice, sh - slice, slice, ox + ow - borderPx, oy + oh - borderPx, borderPx);
 }
 
 function drawHorizontalEdge(ctx, strip, slice, dx, dy, dw, dh, side) {
@@ -64,17 +71,16 @@ function drawHorizontalEdge(ctx, strip, slice, dx, dy, dw, dh, side) {
   const srcW = Math.max(1, sw - 2 * slice);
   const srcX = slice;
 
-  const tilePxOnTarget = dh; // edge thickness drives the natural tile height
-  const scaleY = tilePxOnTarget / srcH;
-  const tileW = srcW * scaleY;
-  let drawn = 0;
-  while (drawn < dw) {
-    const remain = dw - drawn;
-    const useW = Math.min(tileW, remain);
-    const useSrcW = useW / scaleY;
-    ctx.drawImage(strip, srcX, srcY, useSrcW, srcH,
-      dx + drawn, dy, useW, dh);
-    drawn += useW;
+  // Match CSS `border-image-repeat: round`: pick an integer tile count that
+  // fits the edge most closely, then stretch each tile to fit exactly. This
+  // avoids a partial tail tile that would alpha-blend with the background.
+  const scaleY = dh / srcH;
+  const naturalTileW = srcW * scaleY;
+  const count = Math.max(1, Math.round(dw / naturalTileW));
+  const tileW = dw / count;
+  for (let i = 0; i < count; i++) {
+    ctx.drawImage(strip, srcX, srcY, srcW, srcH,
+      dx + i * tileW, dy, tileW, dh);
   }
 }
 
@@ -86,22 +92,18 @@ function drawVerticalEdge(ctx, strip, slice, dx, dy, dw, dh, side) {
   const srcH = Math.max(1, sh - 2 * slice);
   const srcY = slice;
 
-  const tilePxOnTarget = dw;
-  const scaleX = tilePxOnTarget / srcW;
-  const tileH = srcH * scaleX;
-  let drawn = 0;
-  while (drawn < dh) {
-    const remain = dh - drawn;
-    const useH = Math.min(tileH, remain);
-    const useSrcH = useH / scaleX;
-    ctx.drawImage(strip, srcX, srcY, srcW, useSrcH,
-      dx, dy + drawn, dw, useH);
-    drawn += useH;
+  const scaleX = dw / srcW;
+  const naturalTileH = srcH * scaleX;
+  const count = Math.max(1, Math.round(dh / naturalTileH));
+  const tileH = dh / count;
+  for (let i = 0; i < count; i++) {
+    ctx.drawImage(strip, srcX, srcY, srcW, srcH,
+      dx, dy + i * tileH, dw, tileH);
   }
 }
 
-function drawCorner(ctx, strip, slice, dx, dy, size) {
-  ctx.drawImage(strip, 0, 0, slice, slice, dx, dy, size, size);
+function drawCorner(ctx, strip, srcX, srcY, slice, dx, dy, size) {
+  ctx.drawImage(strip, srcX, srcY, slice, slice, dx, dy, size, size);
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }

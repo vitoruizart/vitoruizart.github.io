@@ -4,7 +4,7 @@ import { mountPickFrame } from './screens/pick-frame.js';
 import { mountPickRoom } from './screens/pick-room.js';
 import { mountEdit } from './screens/edit.js';
 import { mountExport } from './screens/export.js';
-import { loadDraft, scheduleDraftSave } from './lib/drafts.js';
+import { loadDraft, scheduleDraftSave, clearDraft } from './lib/drafts.js';
 import { loadBitmap, downscaleBitmap, naturalSize } from './lib/image-io.js';
 import { maybeShowInstallHint } from './lib/install-hint.js';
 import { checkForUpdate } from './lib/update-checker.js';
@@ -43,6 +43,9 @@ subscribe((s) => {
 (async function boot() {
   const draft = await loadDraft();
   if (draft && draft.paintingBlob) {
+    // Build the full patch before touching state. If anything fails (corrupt
+    // blob, unsupported format) the store stays untouched and we fall back
+    // to a clean pick-painting rather than a half-populated state.
     try {
       const bm = await downscaleBitmap(await loadBitmap(draft.paintingBlob));
       const { naturalW, naturalH } = naturalSize(bm);
@@ -50,7 +53,6 @@ subscribe((s) => {
         painting: { blob: draft.paintingBlob, bitmap: bm, naturalW, naturalH },
         placement: draft.placement || getState().placement
       };
-      // Mat/none rooms have no heavy blob — re-hydrate directly from the draft.
       const r = draft.roomRef;
       if (r && r.kind === 'mat') {
         patch.room = { kind: 'mat', color: r.color, padH: r.padH, padV: r.padV, lockPad: r.lockPad };
@@ -58,11 +60,10 @@ subscribe((s) => {
         patch.room = { kind: 'none' };
       }
       setState(patch);
-      // Painting is restored; frame must be re-picked. Room is restored only
-      // for mat/none kinds (photo rooms require an IDB lookup we don't do here).
       patchUi({ screen: 'pick-frame' });
     } catch {
-      // Stale draft, ignore.
+      // Draft is unusable — drop it so we don't re-attempt on every boot.
+      try { await clearDraft(); } catch (_) {}
       render();
     }
   } else {

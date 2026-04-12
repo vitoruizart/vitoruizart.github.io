@@ -17,8 +17,9 @@ export async function mountExport(root) {
         <div style="min-width:44px"></div>
       </div>
       <div class="screen-body" style="display:flex; flex-direction:column; align-items:center; gap:16px; padding-top:24px;">
-        <div id="preview" style="width:100%; max-width:480px; aspect-ratio:1; background:var(--bg-elev); border-radius:var(--radius); overflow:hidden; display:flex; align-items:center; justify-content:center;">
+        <div id="preview" style="width:100%; max-width:480px; aspect-ratio:1; background:var(--bg-elev); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;">
           <div class="spinner"></div>
+          <div style="color:var(--text-muted); font-size:14px;">Generando imagen…</div>
         </div>
         <div style="display:flex; flex-direction:column; gap:10px; width:100%; max-width:320px;">
           <button class="primary" id="share" disabled>Compartir / Guardar</button>

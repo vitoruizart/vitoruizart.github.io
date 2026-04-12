@@ -67,22 +67,25 @@ async function composePhoto({ painting, frame, placement, frameBorderFrac, paint
   ctx.drawImage(roomBitmap, 0, 0, W, H);
 
   const rect = paintingRect(placement, roomRef, paintingRef);
-  const borderPx = (frameBorderFrac || 0) * Math.min(rect.w, rect.h);
+  const borderPxRaw = (frameBorderFrac || 0) * Math.min(rect.w, rect.h);
+  // Round once and reuse everywhere so canvas dims, the painting draw
+  // position, and drawFrame's internal outer rect all agree to the pixel.
+  const borderPxInt = Math.round(borderPxRaw);
 
   const innerW = Math.round(rect.w);
   const innerH = Math.round(rect.h);
-  const totW = innerW + Math.round(2 * borderPx);
-  const totH = innerH + Math.round(2 * borderPx);
+  const totW = innerW + 2 * borderPxInt;
+  const totH = innerH + 2 * borderPxInt;
   const inter = makeCanvas(totW, totH);
   const ictx = inter.getContext('2d');
   ictx.imageSmoothingQuality = 'high';
-  ictx.drawImage(paintBitmap, Math.round(borderPx), Math.round(borderPx), innerW, innerH);
-  if (frame && frame.stripBitmap && borderPx > 0) {
-    drawFrame(ictx, { ...frame, borderPx: Math.round(borderPx) },
-      { x: Math.round(borderPx), y: Math.round(borderPx), w: innerW, h: innerH });
+  ictx.drawImage(paintBitmap, borderPxInt, borderPxInt, innerW, innerH);
+  if (frame && frame.stripBitmap && borderPxInt > 0) {
+    drawFrame(ictx, { ...frame, borderPx: borderPxInt },
+      { x: borderPxInt, y: borderPxInt, w: innerW, h: innerH });
   }
 
-  const corners = projectCornersWithBorder(placement, roomRef, paintingRef, borderPx);
+  const corners = projectCornersWithBorder(placement, roomRef, paintingRef, borderPxInt);
   warpQuad(ctx, inter, corners);
 
   if (roomBitmap.close) roomBitmap.close();

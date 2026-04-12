@@ -1,6 +1,7 @@
 import { setState, patchUi } from '../state.js';
 import { loadBitmap, downscaleBitmap, naturalSize } from '../lib/image-io.js';
 import { showToast } from '../components/toast.js';
+import { loadDraft, clearDraft } from '../lib/drafts.js';
 
 export function mountPickPainting(root) {
   root.innerHTML = `
@@ -17,6 +18,7 @@ export function mountPickPainting(root) {
           <div style="display:flex; flex-direction:column; gap:10px; width:100%; max-width:280px;">
             <button class="primary" id="from-library">Elegir de la galería</button>
             <button id="from-camera">Hacer foto</button>
+            <button class="ghost" id="restart" hidden>Empezar de nuevo</button>
           </div>
         </div>
         <input id="file-library" type="file" accept="image/*" hidden>
@@ -27,10 +29,22 @@ export function mountPickPainting(root) {
 
   const lib = root.querySelector('#file-library');
   const cam = root.querySelector('#file-camera');
+  const restart = root.querySelector('#restart');
   root.querySelector('#from-library').addEventListener('click', () => lib.click());
   root.querySelector('#from-camera').addEventListener('click', () => cam.click());
   lib.addEventListener('change', (e) => handleFile(e.target.files[0]));
   cam.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+  // Surface a "start over" button only when there's a previous-session draft
+  // to discard. First-run users see the plain two-button layout.
+  loadDraft().then((d) => {
+    if (d && d.paintingBlob) restart.hidden = false;
+  }).catch(() => {});
+  restart.addEventListener('click', async () => {
+    if (!confirm('¿Descartar el trabajo guardado?')) return;
+    await clearDraft();
+    restart.hidden = true;
+  });
 }
 
 async function handleFile(file) {

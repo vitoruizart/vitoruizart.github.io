@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, it, expect } from 'vitest';
-import { scheduleDraftSave, loadDraft } from '../../js/lib/drafts.js';
+import { scheduleDraftSave, loadDraft, clearDraft } from '../../js/lib/drafts.js';
 import { _resetForTests } from '../../js/db.js';
 
 beforeEach(async () => {
@@ -61,6 +61,22 @@ describe('drafts', () => {
     await new Promise((r) => setTimeout(r, 50));
     const got = await loadDraft();
     expect(got.roomRef).toEqual({ kind: 'none' });
+  });
+
+  it('clearDraft removes the current draft and cancels a pending save', async () => {
+    const state = {
+      placement: { tx: 0.5, ty: 0.5, scale: 0.3, rotate: 0, rotateX: 0, rotateY: 0 },
+      frame: null, room: { kind: 'none' },
+      painting: { blob: new Blob(['x']), naturalW: 100, naturalH: 80 }
+    };
+    scheduleDraftSave(state, 10);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(await loadDraft()).toBeTruthy();
+    // A pending save scheduled just before clearDraft must not resurrect it.
+    scheduleDraftSave(state, 20);
+    await clearDraft();
+    await new Promise((r) => setTimeout(r, 60));
+    expect(await loadDraft()).toBeUndefined();
   });
 
   it('only the last call within the debounce window persists', async () => {

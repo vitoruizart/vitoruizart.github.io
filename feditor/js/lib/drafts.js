@@ -1,4 +1,4 @@
-import { put, get } from '../db.js';
+import { put, get, del } from '../db.js';
 
 let saveTimer = null;
 
@@ -46,5 +46,14 @@ export async function loadDraft() {
     return await get('drafts', 'current');
   } catch {
     return null;
+  }
+}
+
+export async function clearDraft() {
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+  try {
+    await del('drafts', 'current');
+  } catch (_) {
+    // Nothing to do — an empty draft store is the desired state anyway.
   }
 }
