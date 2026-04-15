@@ -1,6 +1,7 @@
 import { paintingRect, projectCorners } from './transform.js';
 import { drawFrame } from './frame-render.js';
 import { makeCanvas, bitmapToBlob, loadBitmap } from './image-io.js';
+import { MAX_OUTPUT_UPSCALE, MAX_CANVAS_DIM } from './constants.js';
 
 /**
  * Compose the final image as a lossless PNG Blob. Branches on room.kind:
@@ -59,14 +60,30 @@ async function composePhoto({ painting, frame, placement, frameBorderFrac, paint
   const roomRef = { bitmap: roomBitmap, naturalW: roomBitmap.width, naturalH: roomBitmap.height };
   const paintingRef = { bitmap: paintBitmap, naturalW: paintBitmap.width, naturalH: paintBitmap.height };
 
-  const W = roomRef.naturalW;
-  const H = roomRef.naturalH;
+  // Without upscaling, the painting's destination in the room's pixel grid
+  // is `scale * min(roomW, roomH)` — often far below its native resolution,
+  // causing pixelation on pinch-zoom. Enlarge the output so the painting
+  // region keeps at least its native pixel count.
+  const probeRect = paintingRect(placement, roomRef, paintingRef);
+  const upscale = computeExportUpscale({
+    paintingW: paintingRef.naturalW,
+    paintingH: paintingRef.naturalH,
+    rectW: probeRect.w,
+    rectH: probeRect.h,
+    roomW: roomRef.naturalW,
+    roomH: roomRef.naturalH
+  });
+
+  const W = Math.round(roomRef.naturalW * upscale);
+  const H = Math.round(roomRef.naturalH * upscale);
+  const outRoomRef = { naturalW: W, naturalH: H };
+
   const canvas = makeCanvas(W, H);
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(roomBitmap, 0, 0, W, H);
 
-  const rect = paintingRect(placement, roomRef, paintingRef);
+  const rect = paintingRect(placement, outRoomRef, paintingRef);
   const borderPxRaw = (frameBorderFrac || 0) * Math.min(rect.w, rect.h);
   // Round once and reuse everywhere so canvas dims, the painting draw
   // position, and drawFrame's internal outer rect all agree to the pixel.
@@ -85,12 +102,27 @@ async function composePhoto({ painting, frame, placement, frameBorderFrac, paint
       { x: borderPxInt, y: borderPxInt, w: innerW, h: innerH });
   }
 
-  const corners = projectCornersWithBorder(placement, roomRef, paintingRef, borderPxInt);
+  const corners = projectCornersWithBorder(placement, outRoomRef, paintingRef, borderPxInt);
   warpQuad(ctx, inter, corners);
 
   if (roomBitmap.close) roomBitmap.close();
   if (paintBitmap.close) paintBitmap.close();
   return await bitmapToBlob(canvas, 'image/png');
+}
+
+/**
+ * Pick an output upscale factor so the painting's destination rectangle
+ * in the room ends up with at least as many pixels as the painting's
+ * native resolution. Clamped by MAX_OUTPUT_UPSCALE and by a per-axis
+ * canvas ceiling to avoid mobile allocation failures.
+ */
+export function computeExportUpscale({ paintingW, paintingH, rectW, rectH, roomW, roomH }) {
+  const paintNatMin = Math.min(paintingW, paintingH);
+  const rectMin = Math.max(1, Math.min(rectW, rectH));
+  let upscale = Math.max(1, paintNatMin / rectMin);
+  upscale = Math.min(upscale, MAX_OUTPUT_UPSCALE);
+  const dimCap = Math.min(MAX_CANVAS_DIM / roomW, MAX_CANVAS_DIM / roomH);
+  return Math.min(upscale, Math.max(1, dimCap));
 }
 
 function projectCornersWithBorder(placement, room, painting, borderPx) {
