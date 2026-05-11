@@ -1,4 +1,4 @@
-import { setState, patchUi } from '../state.js';
+import { setState, patchUi, defaultPlacement } from '../state.js';
 import { loadBitmap, downscaleBitmap, naturalSize } from '../lib/image-io.js';
 import { showToast } from '../components/toast.js';
 import { loadDraft, clearDraft } from '../lib/drafts.js';
@@ -41,8 +41,9 @@ export function mountPickPainting(root) {
     if (d && d.paintingBlob) restart.hidden = false;
   }).catch(() => {});
   restart.addEventListener('click', async () => {
-    if (!confirm('¿Descartar el trabajo guardado?')) return;
+    if (!confirm('¿Descartar el trabajo actual y empezar de cero?')) return;
     await clearDraft();
+    setState({ painting: null, frame: null, room: null, placement: defaultPlacement() });
     restart.hidden = true;
   });
 }

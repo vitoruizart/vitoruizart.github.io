@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   paintingRect, toCssTransform, paintingPreviewSize, clampPlacement,
-  projectCorners, PERSPECTIVE_PX
+  projectCorners, roomDisplayRect, PERSPECTIVE_PX
 } from '../../js/lib/transform.js';
 
 const room = { naturalW: 1000, naturalH: 800 };
@@ -79,5 +79,31 @@ describe('projectCorners', () => {
     // Original was 200x150; rotated 90° should be 150x200.
     expect(w).toBeCloseTo(150, 3);
     expect(h).toBeCloseTo(200, 3);
+  });
+});
+
+describe('roomDisplayRect', () => {
+  it('letterboxes a landscape room inside a portrait stage (wider than tall)', () => {
+    const r = roomDisplayRect({ naturalW: 2000, naturalH: 1000 }, 400, 600);
+    expect(r.w).toBe(400);
+    expect(r.h).toBe(200);
+  });
+
+  it('letterboxes a portrait room inside a landscape stage', () => {
+    const r = roomDisplayRect({ naturalW: 800, naturalH: 1200 }, 600, 400);
+    expect(r.h).toBe(400);
+    expect(r.w).toBeCloseTo(400 * (800 / 1200), 5);
+  });
+
+  it('fills the stage exactly when aspect ratios match', () => {
+    const r = roomDisplayRect({ naturalW: 1600, naturalH: 1200 }, 800, 600);
+    expect(r.w).toBe(800);
+    expect(r.h).toBe(600);
+  });
+
+  it('square room in square stage fills the stage', () => {
+    const r = roomDisplayRect({ naturalW: 500, naturalH: 500 }, 400, 400);
+    expect(r.w).toBe(400);
+    expect(r.h).toBe(400);
   });
 });

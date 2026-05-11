@@ -29,11 +29,14 @@ export function paintingRect(placement, room, painting) {
  * to its (scaled) rendered size; this transform handles translate, rotate,
  * and perspective tilt around the centroid.
  *
- * stageW/stageH are the on-screen room rect dimensions (after object-fit: cover).
+ * dispW/dispH are the room's displayed rect on screen — i.e. the result of
+ * `roomDisplayRect()` (object-fit: contain), NOT the raw stage box. tx/ty are
+ * fractions of that rect, so this matches what the canvas export does with the
+ * room's native pixel grid.
  */
-export function toCssTransform(placement, stageW, stageH) {
-  const px = (placement.tx - 0.5) * stageW;
-  const py = (placement.ty - 0.5) * stageH;
+export function toCssTransform(placement, dispW, dispH) {
+  const px = (placement.tx - 0.5) * dispW;
+  const py = (placement.ty - 0.5) * dispH;
   return [
     `translate3d(${px.toFixed(2)}px, ${py.toFixed(2)}px, 0)`,
     `translate(-50%, -50%)`,
@@ -45,10 +48,33 @@ export function toCssTransform(placement, stageW, stageH) {
 }
 
 /**
- * Painting size in stage (preview) pixels, to set on the live element.
+ * On-screen rect of a photo room inside the editor stage, using
+ * object-fit: contain semantics (full room visible, centered, with
+ * letterboxing if aspect ratios differ). Callers use the returned
+ * dimensions as the coordinate frame for placement so preview and
+ * export stay in sync.
  */
-export function paintingPreviewSize(placement, stageW, stageH, painting) {
-  const minSide = Math.min(stageW, stageH);
+export function roomDisplayRect(room, stageW, stageH) {
+  const roomAR = room.naturalW / room.naturalH;
+  const stageAR = stageW / Math.max(stageH, 1);
+  if (stageAR > roomAR) {
+    const h = stageH;
+    const w = h * roomAR;
+    return { w, h };
+  }
+  const w = stageW;
+  const h = w / roomAR;
+  return { w, h };
+}
+
+/**
+ * Painting size in preview pixels, to set on the live element.
+ * dispW/dispH are the room's displayed rect (`roomDisplayRect()`), so the size
+ * comes out as `scale * min(displayed room sides)` — the same fraction the
+ * canvas export uses against the room's native pixel grid.
+ */
+export function paintingPreviewSize(placement, dispW, dispH, painting) {
+  const minSide = Math.min(dispW, dispH);
   const w = placement.scale * minSide;
   const aspect = painting.naturalH / painting.naturalW;
   return { w, h: w * aspect };

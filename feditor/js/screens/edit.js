@@ -1,5 +1,5 @@
 import { getState, setState, patchUi, patchPlacement, setPlacement, patchRoom, resetPlacement, subscribe, defaultPlacement } from '../state.js';
-import { toCssTransform, paintingPreviewSize, clampPlacement } from '../lib/transform.js';
+import { toCssTransform, paintingPreviewSize, clampPlacement, roomDisplayRect } from '../lib/transform.js';
 import { attachGestures } from '../lib/gestures.js';
 import { mountTiltPanel } from '../components/tilt-panel.js';
 import { showToast } from '../components/toast.js';
@@ -120,15 +120,21 @@ export function mountEdit(root) {
     detachGestures = attachGestures(stage, {
       snapshot: () => ({ ...getState().placement }),
       onStart: (b) => { snapshot = b.snapshot; },
-      onMove: ({ dx, dy, scale, rotate }, b) => {
+      onMove: ({ dx, dy, scale }, b) => {
         const snap = b.snapshot;
-        const tx = snap.tx + dx / Math.max(stageW, 1);
-        const ty = snap.ty + dy / Math.max(stageH, 1);
+        // Use the room's displayed rect (object-fit: contain) as the
+        // coordinate frame so tx/ty stay in room-relative units and
+        // match what export-canvas expects.
+        const { w: dispW, h: dispH } = roomDisplayRect(getState().room, stageW, stageH);
+        const tx = snap.tx + dx / Math.max(dispW, 1);
+        const ty = snap.ty + dy / Math.max(dispH, 1);
         const next = clampPlacement({
           ...snap,
           tx, ty,
-          scale: snap.scale * scale,
-          rotate: snap.rotate + rotate
+          scale: snap.scale * scale
+          // Rotation intentionally excluded: use the "Girar ↻" slider
+          // in the Tilt tab. Twisting fingers during pinch no longer
+          // rotates the painting.
         });
         setPlacement(next);
         applyLayout();
@@ -152,10 +158,11 @@ export function mountEdit(root) {
 }
 
 function applyPhotoTransform(paintingEl, s) {
-  const sz = paintingPreviewSize(s.placement, stageW, stageH, s.painting);
+  const { w: dispW, h: dispH } = roomDisplayRect(s.room, stageW, stageH);
+  const sz = paintingPreviewSize(s.placement, dispW, dispH, s.painting);
   paintingEl.style.width = sz.w + 'px';
   paintingEl.style.height = sz.h + 'px';
-  paintingEl.style.transform = toCssTransform(s.placement, stageW, stageH);
+  paintingEl.style.transform = toCssTransform(s.placement, dispW, dispH);
   if (s.frame) {
     const borderPx = (s.frame.borderFrac || 0.06) * Math.min(sz.w, sz.h);
     paintingEl.style.borderWidth = borderPx + 'px';
