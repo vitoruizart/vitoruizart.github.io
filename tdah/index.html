@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15171c">
+<meta name="description" content="Cuestionario de autoevaluación orientativa de TDAH en adultos, basado en la escala ASRS v1.1 (OMS) y los criterios DSM-5. No es un diagnóstico.">
+<title>Autoevaluación de TDAH en adultos</title>
+<style>
+:root{
+  --bg:#15171c; --bg2:#1d2026; --bg3:#262a32;
+  --line:rgba(255,255,255,.09);
+  --tx:#eef0f3; --tx-dim:rgba(238,240,243,.62); --tx-dim2:rgba(238,240,243,.40);
+  --accent:#6ea8fe; --accent-d:#5a93e8; --accent-tint:rgba(110,168,254,.16);
+  --r:14px;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--tx);}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;line-height:1.45;font-size:16px;min-height:100%;overflow-x:hidden;}
+.wrap{max-width:620px;margin:0 auto;padding:calc(16px + var(--safe-t)) 16px calc(34px + var(--safe-b));}
+h1{font-size:24px;line-height:1.25;margin:2px 0 8px;font-weight:750;letter-spacing:-.01em;}
+h2{font-size:18px;margin:26px 0 10px;font-weight:700;}
+p{margin:0 0 12px;}
+a{color:var(--accent);}
+.lead{color:var(--tx-dim);font-size:15.5px;}
+.fine{color:var(--tx-dim2);font-size:12.5px;line-height:1.5;}
+button{font:inherit;color:inherit;margin:0;padding:0;cursor:pointer;border:0;background:none;}
+.btn{display:block;width:100%;padding:15px 16px;border-radius:var(--r);background:var(--accent);color:#0c1320;font-weight:700;font-size:16.5px;text-align:center;border:1px solid var(--accent-d);touch-action:manipulation;user-select:none;-webkit-user-select:none;}
+.btn:active{transform:scale(.99);background:var(--accent-d);}
+.btn.sec{background:var(--bg3);color:var(--tx);border-color:var(--line);}
+.btn.sec:active{background:#2f343d;}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--tx-dim);}
+.btn.ghost:active{background:var(--bg2);}
+.btn.danger{background:transparent;border-color:rgba(215,90,79,.5);color:#e98a82;font-weight:600;}
+.btn.danger:active{background:rgba(215,90,79,.12);}
+.btn[disabled]{opacity:.38;pointer-events:none;}
+.btn + .btn{margin-top:10px;}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:15px 16px;font-size:14.5px;color:var(--tx-dim);line-height:1.55;}
+.card p:last-child{margin-bottom:0;}
+.card strong{color:var(--tx);}
+.card.warn{border-color:rgba(215,90,79,.45);background:rgba(215,90,79,.10);color:#f0c9c5;}
+.card.warn strong{color:#fff;}
+.card.caution{border-color:rgba(205,177,58,.42);background:rgba(205,177,58,.10);color:#ecdca7;}
+.card.caution strong{color:#fff;}
+.card.ok{border-color:rgba(63,174,107,.35);background:rgba(63,174,107,.09);color:#bfe6cd;}
+.card.ok strong{color:#fff;}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;}
+.pausebtn{flex:0 0 auto;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--bg2);color:var(--tx-dim);font-size:13.5px;touch-action:manipulation;}
+.pausebtn:active{background:var(--bg3);}
+.pcount{flex:0 0 auto;font-size:13px;color:var(--tx-dim);font-variant-numeric:tabular-nums;}
+.bar{height:6px;border-radius:999px;background:var(--bg3);overflow:hidden;margin-bottom:22px;}
+.bar > i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .25s ease;}
+.qkicker{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--tx-dim2);margin-bottom:8px;}
+.qtext{font-size:21px;line-height:1.35;font-weight:650;margin:0 0 22px;}
+.opts{display:flex;flex-direction:column;gap:11px;margin-bottom:24px;}
+.opt{display:flex;align-items:flex-start;gap:13px;width:100%;text-align:left;padding:15px 15px;min-height:56px;border-radius:var(--r);border:1.5px solid var(--line);background:var(--bg2);color:var(--tx);font-size:16.5px;line-height:1.3;touch-action:manipulation;user-select:none;-webkit-user-select:none;}
+.opt:active{transform:scale(.992);background:var(--bg3);}
+.opt::before{content:"";flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:2px solid var(--tx-dim2);margin-top:2px;}
+.opt > span{flex:1;}
+.opt.sel{border-color:var(--accent);background:var(--accent-tint);}
+.opt.sel::before{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 3px var(--bg2);}
+.nav{display:flex;gap:11px;}
+.nav .btn{flex:1;}
+.qfoot{margin-top:22px;}
+.qfoot a{font-size:13px;color:var(--tx-dim2);}
+
+.scorewrap{text-align:center;margin:12px 0 6px;}
+.score{font-size:58px;font-weight:800;line-height:1;letter-spacing:-.02em;}
+.score small{font-size:18px;font-weight:600;color:var(--tx-dim);}
+.pill{display:inline-block;margin-top:12px;padding:6px 16px;border-radius:999px;font-weight:750;font-size:14.5px;color:#0c1320;}
+.scbar{height:12px;border-radius:999px;background:var(--bg3);overflow:hidden;margin:18px 0 5px;}
+.scbar > i{display:block;height:100%;border-radius:999px;}
+.scticks{display:flex;justify-content:space-between;font-size:10.5px;color:var(--tx-dim2);margin-bottom:18px;letter-spacing:.02em;}
+ul.brk{list-style:none;padding:0;margin:0 0 4px;}
+ul.brk li{padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px;display:flex;justify-content:space-between;gap:14px;align-items:baseline;}
+ul.brk li:last-child{border-bottom:0;}
+ul.brk li b{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--tx);}
+details{border:1px solid var(--line);border-radius:var(--r);margin:14px 0;background:var(--bg2);}
+details > summary{padding:13px 15px;font-size:14.5px;font-weight:600;cursor:pointer;color:var(--tx-dim);list-style:none;}
+details > summary::-webkit-details-marker{display:none;}
+details > summary::before{content:"›  ";color:var(--tx-dim2);}
+details[open] > summary::before{content:"⌄  ";}
+details[open] > summary{border-bottom:1px solid var(--line);}
+details .body{padding:14px 15px;font-size:13.5px;color:var(--tx-dim);line-height:1.55;}
+details .body p:last-child{margin-bottom:0;}
+.ansrow{padding:10px 0;border-bottom:1px solid var(--line);}
+.ansrow:last-child{border-bottom:0;}
+.ansrow .q{color:var(--tx-dim);font-size:13px;}
+.ansrow .a{color:var(--tx);font-weight:600;font-size:13px;margin-top:3px;}
+hr.sep{border:0;border-top:1px solid var(--line);margin:24px 0;}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;}.btn:active,.opt:active{transform:none;}}
+@media (max-width:380px){.qtext{font-size:19.5px;}.score{font-size:50px;}h1{font-size:22px;}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript><div style="max-width:620px;margin:40px auto;padding:0 16px;font-family:system-ui,sans-serif;color:#eef0f3">Este cuestionario necesita que JavaScript esté activado en tu navegador.</div></noscript>
+<script>
+(function(){
+'use strict';
+
+var STORE_KEY = 'tdah-autoeval-v1';
+var BANK_VERSION = 1;
+var ADV_DELAY = 230; // ms before auto-advancing to the next question
+
+// ---------- response scales ----------
+var V5  = [0, 0.25, 0.5, 0.75, 1];
+var V5R = [1, 0.75, 0.5, 0.25, 0];
+var FREQ   = ['Nunca','Casi nunca','A veces','A menudo','Con mucha frecuencia'];
+var AGREE  = ['Totalmente en desacuerdo','En desacuerdo','Ni de acuerdo ni en desacuerdo','De acuerdo','Totalmente de acuerdo'];
+var IMPACT = ['Nada','Un poco','Moderadamente','Bastante','Mucho o de forma grave'];
+
+// item factories
+function A(id,dim,asrsNo,text,thr,partA){ return {id:id,dim:dim,asrsNo:asrsNo,text:text,opts:FREQ,vals:V5,weight:1,dsmThr:thr,canon:true,partA:!!partA}; } // canonical ASRS frequency item
+function F(id,dim,text){ return {id:id,dim:dim,text:text,opts:FREQ,vals:V5,weight:1,dsmThr:3,canon:false}; }   // extra frequency symptom
+function G(id,dim,text){ return {id:id,dim:dim,text:text,opts:AGREE,vals:V5,weight:1,dsmThr:3,canon:false}; }  // extra agreement (positively keyed) symptom
+function R(id,dim,text){ return {id:id,dim:dim,text:text,opts:AGREE,vals:V5R,weight:1,dsmThr:null,canon:false,rev:true}; } // reverse-keyed item (consistency control)
+function VAL(id,text){ return {id:id,dim:'validity',text:text,opts:AGREE,vals:V5,weight:0}; }                   // infrequency / validity item
+function ATT(id,text,expect){ return {id:id,dim:'attn',text:text,opts:FREQ,vals:V5,weight:0,expect:expect}; }  // attention check
+function IMP(id,text){ return {id:id,dim:'impact',text:text,opts:IMPACT,vals:V5,weight:1}; }                    // functional impact
+function IMPG(id,text){ return {id:id,dim:'impact',text:text,opts:AGREE,vals:V5,weight:1}; }                    // functional impact via agreement
+function C(id,dim,text,opts,vals,weight){ return {id:id,dim:dim,text:text,opts:opts,vals:vals,weight:weight||1}; } // bespoke choice item
+
+// ---------- the questionnaire (48 items) ----------
+// Items A(...) are adapted from the WHO/Harvard ASRS v1.1 (Kessler et al., 2005); the rest are built from DSM-5 criteria.
+var QUESTIONS = [
+  A('q_ia1','IA',1,'¿Con qué frecuencia te cuesta terminar los últimos detalles de un proyecto una vez que ya has hecho las partes más difíciles?',2,true),
+  A('q_hi1','HI',5,'¿Con qué frecuencia mueves o haces tamborilear las manos o los pies cuando tienes que estar sentado/a durante mucho rato?',3,true),
+  A('q_ia2','IA',2,'¿Con qué frecuencia te cuesta poner las cosas en orden cuando tienes que hacer una tarea que exige organización?',2,true),
+  A('q_hi2','HI',6,'¿Con qué frecuencia te sientes excesivamente activo/a y empujado/a a hacer cosas, como si te impulsara un motor?',3,true),
+  A('q_ia3','IA',3,'¿Con qué frecuencia tienes problemas para recordar citas, compromisos u obligaciones?',2,true),
+  A('q_ia4','IA',4,'Cuando tienes que hacer una tarea que exige pensar mucho, ¿con qué frecuencia la evitas o aplazas su comienzo?',3,true),
+  A('q_hi3','HI',12,'¿Con qué frecuencia te levantas del asiento en reuniones u otras situaciones en las que se espera que permanezcas sentado/a?',3),
+  A('q_ia7','IA',7,'¿Con qué frecuencia cometes errores por descuido cuando tienes que trabajar en algo aburrido o difícil?',3),
+  A('q_hi4','HI',13,'¿Con qué frecuencia te sientes inquieto/a o agitado/a por dentro?',3),
+  A('q_ia8','IA',8,'¿Con qué frecuencia te cuesta mantener la atención cuando haces un trabajo aburrido o repetitivo?',3),
+  R('q_rev1','IA','Soy una persona muy ordenada y casi nunca pierdo ni extravío mis cosas.'),
+  A('q_ia9','IA',9,'¿Con qué frecuencia te cuesta concentrarte en lo que te dicen las personas, incluso cuando te hablan directamente?',2),
+  A('q_hi5','HI',14,'¿Con qué frecuencia te cuesta relajarte y desconectar cuando tienes tiempo libre para ti?',3),
+  A('q_ia10','IA',10,'¿Con qué frecuencia extravías cosas o te cuesta encontrarlas en casa o en el trabajo?',3),
+  A('q_hi6','HI',15,'¿Con qué frecuencia te das cuenta de que estás hablando demasiado en situaciones sociales?',3),
+  A('q_ia11','IA',11,'¿Con qué frecuencia te distraes con la actividad o el ruido que hay a tu alrededor?',2),
+  A('q_hi7','HI',16,'En una conversación, ¿con qué frecuencia terminas las frases de las personas con las que hablas antes de que ellas puedan terminarlas?',2),
+  G('q_finish','IA','Empiezo muchas cosas con entusiasmo, pero me cuesta llevarlas hasta el final.'),
+  A('q_hi8','HI',17,'¿Con qué frecuencia te cuesta esperar tu turno en situaciones en las que hay que hacer cola o esperar?',3),
+  R('q_rev_finish','IA','Cuando empiezo algo lo termino: suelo entregar las cosas con antelación y sin agobios de última hora.'),
+  A('q_hi9','HI',18,'¿Con qué frecuencia interrumpes a otras personas cuando están ocupadas o hablando?',3),
+  F('q_mindwander','IA','Mientras leo o escucho algo, me doy cuenta de que mi mente se ha ido a otra parte y tengo que releer o pedir que me lo repitan.'),
+  VAL('q_val1','Nunca, ni una sola vez en mi vida adulta, he olvidado una cita, un nombre o dónde había dejado algo.'),
+  F('q_needmove','HI','Necesito moverme: cambio de postura, muevo las piernas, me levanto… estar completamente quieto/a me resulta incómodo.'),
+  F('q_planning','IA','Me cuesta planificar tareas que tienen varios pasos, y suelo calcular mal —siempre por lo bajo— el tiempo que me llevarán.'),
+  ATT('q_attn','Para comprobar que estás leyendo cada pregunta con atención, en esta marca la opción «A veces».',2),
+  F('q_impulsive','HI','Tomo decisiones o digo cosas de forma impulsiva y luego me arrepiento.'),
+  R('q_rev_focus','IA','Me concentro con facilidad y casi nunca se me va la cabeza a otra cosa mientras estoy haciendo algo.'),
+  F('q_lose2','IA','¿Con qué frecuencia pierdes u olvidas dónde has dejado objetos importantes (llaves, móvil, gafas, cartera, documentos)?'),
+  F('q_boredom','HI','Me aburro con facilidad y necesito continuamente algo nuevo que hacer (cambiar de tarea, mirar el móvil, etc.).'),
+  R('q_rev_calm','HI','Soy una persona tranquila; me resulta fácil quedarme quieto/a y relajarme.'),
+  G('q_messy','IA','Mi espacio (la mesa, la casa, los archivos del ordenador, la mochila…) acaba desordenado por mucho que intente mantenerlo en orden.'),
+  F('q_impulsebuy','HI','Hago compras, comentarios o planes de forma impulsiva, sin pararme a pensar en las consecuencias.'),
+  F('q_jump','IA','Salto de una idea o de una tarea a otra y pierdo el hilo de lo que estaba haciendo.'),
+  VAL('q_val2','Siempre llego puntual a absolutamente todos mis compromisos, sin ninguna excepción.'),
+  F('q_zoneout','IA','En conversaciones largas o explicaciones, desconecto y luego no sabría decir bien de qué se ha hablado.'),
+  R('q_rev_punctual','IA','Soy de esas personas que casi siempre llega puntual y bien organizada a sus citas y compromisos.'),
+  IMP('q_imp_work','¿En qué medida estas dificultades afectan a tu rendimiento o tu estabilidad en el trabajo o los estudios?'),
+  IMP('q_imp_rel','¿En qué medida afectan a tus relaciones (pareja, familia, amistades)?'),
+  IMP('q_imp_daily','¿En qué medida afectan a tu día a día: organizar la casa, el dinero, el papeleo, los recados o las citas?'),
+  IMP('q_imp_general','En general, ¿hasta qué punto sientes que estos rasgos te limitan o te hacen sufrir?'),
+  IMPG('q_imp_effort','Cuando consigo funcionar bien, es a costa de mucho más esfuerzo, estrés y agotamiento que la gente de mi entorno.'),
+  C('q_setting','setting','Estas dificultades, ¿en cuántos ámbitos de tu vida aparecen? (Por ejemplo: trabajo o estudios, casa, vida social, ocio.)',
+     ['En ninguno, la verdad','Solo en uno de ellos','En dos de ellos','En tres o más ámbitos'], [0, 0.34, 0.67, 1]),
+  C('q_persist','persist','¿Desde cuándo te acompañan estas dificultades?',
+     ['Solo desde hace unos meses','Aproximadamente desde hace un año','Desde hace varios años','Desde que tengo memoria / casi toda mi vida'], [0.1, 0.4, 0.7, 1]),
+  C('q_on_hyper','onset','Cuando eras niño/a, ¿te describían como inquieto/a, que no parabas quieto/a, o que hablabas mucho?',
+     ['Para nada','Un poco','Bastante','Mucho'], [0, 0.34, 0.67, 1]),
+  C('q_on_inatt','onset','De niño/a, ¿tenías fama de despistado/a, soñador/a, de "estar en las nubes" o de perder las cosas?',
+     ['Para nada','Un poco','Bastante','Mucho'], [0, 0.34, 0.67, 1]),
+  C('q_on_school','onset','En la escuela primaria, ¿tuviste problemas de atención o de conducta, deberes sin terminar, o comentarios de profesores sobre tu concentración o tu inquietud?',
+     ['No, ninguno','Alguno aislado','Varios, con cierta frecuencia','Sí, claramente y de forma habitual'], [0, 0.34, 0.67, 1]),
+  C('q_on_before12','onset','Mirando atrás, ¿dirías que estas dificultades ya existían antes de los 12 años?',
+     ['No, aparecieron siendo ya adulto/a','No estoy seguro/a','En parte sí','Sí, claramente'], [0, 0.2, 0.67, 1], 2)
+];
+
+// pairs of "should-agree" items (a reverse item vs the symptom it negates, or a near-duplicate) used for the consistency index
+var PAIRS = [['q_ia10','q_rev1'], ['q_ia10','q_lose2'], ['q_finish','q_rev_finish'], ['q_mindwander','q_rev_focus'], ['q_hi4','q_rev_calm']];
+
+var QMAP = {}; QUESTIONS.forEach(function(q){ QMAP[q.id] = q; });
+var N = QUESTIONS.length;
+
+var BANDS = {
+  bajo:    { label:'Bajo',     color:'#3fae6b', text:'Tus respuestas reflejan pocos indicios compatibles con un TDAH. Aun así, si hay algo concreto que te cuesta o que te preocupa, puedes comentarlo con un/a profesional de salud mental.' },
+  medio:   { label:'Medio',    color:'#cdb13a', text:'Tus respuestas reflejan algunos indicios compatibles con rasgos de TDAH. No es concluyente; si esos rasgos interfieren en tu vida, puede ser útil comentarlo con un/a profesional para valorarlo con calma.' },
+  alto:    { label:'Alto',     color:'#e08a3c', text:'Tus respuestas reflejan bastantes indicios compatibles con un posible TDAH. Es recomendable que lo valore un/a profesional de salud mental mediante una evaluación adecuada.' },
+  muyalto: { label:'Muy alto', color:'#d75a4f', text:'Tus respuestas reflejan numerosos indicios compatibles con un TDAH. Es muy recomendable que busques una evaluación con un/a profesional de salud mental. Un resultado alto en un cuestionario no es un diagnóstico, pero sí un motivo razonable para consultarlo.' }
+};
+
+// ---------- state ----------
+var state = { answers:{}, idx:0 };
+var advTimer = null;
+var APP = null;
+
+function clearAdv(){ if(advTimer){ clearTimeout(advTimer); advTimer = null; } }
+
+// ---------- persistence ----------
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify({ v:BANK_VERSION, answers:state.answers, idx:state.idx, ts:Date.now() })); }
+  catch(e){ /* storage unavailable / full — keep going in memory only */ }
+}
+function clearStore(){ try{ localStorage.removeItem(STORE_KEY); }catch(e){} }
+function load(){
+  state = { answers:{}, idx:0 };
+  var raw = null;
+  try{ raw = localStorage.getItem(STORE_KEY); }catch(e){ return; }
+  if(!raw) return;
+  var obj = null;
+  try{ obj = JSON.parse(raw); }catch(e){ clearStore(); return; }
+  if(!obj || obj.v !== BANK_VERSION || !obj.answers || typeof obj.answers !== 'object'){ clearStore(); return; }
+  for(var k in obj.answers){
+    if(!Object.prototype.hasOwnProperty.call(obj.answers, k)) continue;
+    var q = QMAP[k], v = obj.answers[k];
+    if(q && typeof v === 'number' && v === (v|0) && v >= 0 && v < q.opts.length) state.answers[k] = v;
+  }
+  var idx = (typeof obj.idx === 'number' && obj.idx === (obj.idx|0)) ? obj.idx : 0;
+  idx = Math.max(0, Math.min(idx, N - 1));
+  state.idx = Math.min(idx, reachableMax());
+}
+
+// ---------- progress helpers ----------
+function answeredCount(){ var c = 0; for(var i=0;i<N;i++) if(QUESTIONS[i].id in state.answers) c++; return c; }
+function firstUnanswered(){ for(var i=0;i<N;i++) if(!(QUESTIONS[i].id in state.answers)) return i; return -1; }
+function allAnswered(){ return firstUnanswered() === -1; }
+function reachableMax(){ var f = firstUnanswered(); return f === -1 ? N - 1 : f; } // furthest question the user is allowed to reach
+function hasProgress(){ return answeredCount() > 0; }
+
+// ---------- tiny DOM helper ----------
+function append(parent, c){
+  if(c == null) return;
+  if(Array.isArray(c)){ for(var i=0;i<c.length;i++) append(parent, c[i]); return; }
+  parent.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+}
+function el(tag, props){
+  var n = document.createElement(tag);
+  if(props) for(var k in props){
+    if(!Object.prototype.hasOwnProperty.call(props, k)) continue;
+    var v = props[k];
+    if(k === 'class') n.className = v;
+    else if(k === 'text') n.textContent = v;
+    else if(typeof v === 'function' && k.indexOf('on') === 0) n.addEventListener(k.slice(2), v, false);
+    else if(v === true) n.setAttribute(k, '');
+    else if(v !== false && v != null) n.setAttribute(k, String(v));
+  }
+  for(var i=2;i<arguments.length;i++) append(n, arguments[i]);
+  return n;
+}
+function btn(label, cls, onClick, disabled){
+  var p = { class:'btn' + (cls ? ' ' + cls : ''), type:'button', onclick:onClick };
+  if(disabled) p.disabled = true;
+  return el('button', p, label);
+}
+function mount(node){ APP.replaceChildren(node); window.scrollTo(0, 0); }
+
+// ---------- shared bits ----------
+function disclaimerCard(){
+  return el('div', { class:'card' },
+    el('p', null, el('strong', null, 'Importante: '), 'este cuestionario es una herramienta de ', el('strong', null, 'autoexploración orientativa'), '. No es un diagnóstico ni sustituye la valoración de un/a profesional de salud mental. El TDAH solo puede diagnosticarlo un/a profesional cualificado/a tras una evaluación completa.'),
+    el('p', { class:'fine' }, 'Pensado para personas adultas. Se basa en la escala ASRS v1.1 (OMS / Harvard Medical School) y en los criterios del DSM-5. No se recoge ningún dato personal: todo se procesa en tu navegador y nada se envía a ningún servidor; el progreso se guarda solo en este dispositivo.')
+  );
+}
+function sourcesDetails(){
+  return el('details', null,
+    el('summary', null, 'Fuentes y sobre este test'),
+    el('div', { class:'body' },
+      el('p', null, 'Las preguntas marcadas con escala de frecuencia están adaptadas de la escala de cribado ', el('strong', null, 'ASRS v1.1'), ' (Adult ADHD Self-Report Scale; Organización Mundial de la Salud y Harvard Medical School, Kessler et al., 2005). El resto se han elaborado a partir de los criterios diagnósticos del ', el('strong', null, 'DSM-5'), ' (American Psychiatric Association) y de material divulgativo de los CDC. Se han añadido preguntas equivalentes, inversas y de control para estimar la coherencia de tus respuestas. El ASRS es un instrumento de cribado, no de diagnóstico.'),
+      el('p', null, 'Referencias:'),
+      el('ul', { style:'margin:0;padding-left:18px' },
+        el('li', null, 'OMS / Harvard Medical School — ASRS v1.1: ', el('a', { href:'https://www.hcp.med.harvard.edu/ncs/asrs.php', target:'_blank', rel:'noopener noreferrer' }, 'hcp.med.harvard.edu/ncs/asrs.php')),
+        el('li', null, 'APA — DSM-5 (criterios del TDAH): ', el('a', { href:'https://www.psychiatry.org/psychiatrists/practice/dsm', target:'_blank', rel:'noopener noreferrer' }, 'psychiatry.org')),
+        el('li', null, 'CDC — Diagnosing ADHD: ', el('a', { href:'https://www.cdc.gov/adhd/diagnosis/index.html', target:'_blank', rel:'noopener noreferrer' }, 'cdc.gov/adhd'))
+      ),
+      el('p', null, 'Si los resultados te preocupan, o si crees que estas dificultades afectan a tu vida, consulta con un/a profesional de salud mental.')
+    )
+  );
+}
+
+// ---------- intro screen ----------
+function renderIntro(){
+  clearAdv();
+  var actions;
+  if(allAnswered()){
+    actions = el('div', { style:'margin-top:20px' },
+      btn('Ver mi resultado', '', renderResults),
+      btn('Revisar mis respuestas', 'sec', function(){ state.idx = 0; save(); renderQuiz(); }),
+      btn('Empezar de nuevo', 'danger', resetAll)
+    );
+  } else if(hasProgress()){
+    actions = el('div', { style:'margin-top:20px' },
+      btn('Continuar — pregunta ' + (state.idx + 1) + ' de ' + N, '', renderQuiz),
+      btn('Empezar de nuevo', 'danger', resetAll)
+    );
+  } else {
+    actions = el('div', { style:'margin-top:20px' },
+      btn('Empezar el cuestionario', '', function(){ state.idx = 0; save(); renderQuiz(); })
+    );
+  }
+  mount(el('div', { class:'wrap' },
+    el('h1', null, 'Autoevaluación de TDAH en adultos'),
+    el('p', { class:'lead' }, 'Un cuestionario de ', el('strong', null, String(N)), ' preguntas para explorar, de forma orientativa, en qué medida presentas rasgos asociados al trastorno por déficit de atención e hiperactividad. Va una pregunta cada vez; al responder, pasa sola a la siguiente.'),
+    disclaimerCard(),
+    actions,
+    el('p', { class:'fine', style:'margin-top:18px' }, 'Puedes pausar cuando quieras: tu progreso se guarda automáticamente y podrás continuar más tarde en este mismo dispositivo y navegador. También puedes volver atrás y avanzar por las preguntas que ya hayas desbloqueado.'),
+    sourcesDetails()
+  ));
+}
+
+// ---------- quiz screen ----------
+function kickerFor(q){
+  switch(q.dim){
+    case 'IA': return 'Atención';
+    case 'HI': return 'Actividad e impulsividad';
+    case 'impact': return 'Impacto en tu vida';
+    case 'setting': return 'Ámbitos afectados';
+    case 'persist': return 'Desde cuándo';
+    case 'onset': return 'En la infancia';
+    case 'validity': return 'Sobre ti';
+    case 'attn': return 'Lee con atención';
+    default: return '';
+  }
+}
+function renderQuiz(){
+  clearAdv();
+  state.idx = Math.max(0, Math.min(state.idx, reachableMax()));
+  var idx = state.idx;
+  var q = QUESTIONS[idx];
+  var rMax = reachableMax();
+  var done = allAnswered();
+  var renderedAnswered = (q.id in state.answers);
+  var selIdx = state.answers[q.id];
+
+  var optsWrap = el('div', { class:'opts', id:'opts' });
+  q.opts.forEach(function(label, i){
+    optsWrap.appendChild(el('button', {
+      class:'opt' + (renderedAnswered && selIdx === i ? ' sel' : ''),
+      type:'button',
+      onclick: function(){ onPick(i, renderedAnswered); }
+    }, el('span', null, label)));
+  });
+
+  var foot = [];
+  if(done) foot.push(btn('Ver resultado ✓', '', renderResults));
+  foot.push(el('p', { class:'fine', style:'margin-top:16px' }, 'Tus respuestas se guardan automáticamente en este dispositivo. Puedes cerrar la página y continuar más tarde.'));
+  foot.push(el('p', { style:'margin-top:6px' }, el('a', { href:'#', onclick:function(e){ e.preventDefault(); resetAll(); } }, 'Empezar de nuevo')));
+
+  var pct = Math.round(answeredCount() / N * 100);
+
+  mount(el('div', { class:'wrap' },
+    el('div', { class:'top' },
+      el('button', { class:'pausebtn', type:'button', onclick:function(){ save(); renderIntro(); } }, '‖ Pausar'),
+      el('div', { class:'pcount' }, 'Pregunta ' + (idx + 1) + ' de ' + N)
+    ),
+    el('div', { class:'bar' }, el('i', { style:'width:' + pct + '%' })),
+    el('div', { class:'qkicker' }, kickerFor(q)),
+    el('p', { class:'qtext' }, q.text),
+    optsWrap,
+    el('div', { class:'nav' },
+      btn('‹ Atrás', 'sec', function(){ goTo(idx - 1); }, idx === 0),
+      btn('Siguiente ›', 'sec', function(){ goTo(idx + 1); }, !(renderedAnswered && idx < rMax))
+    ),
+    el('div', { class:'qfoot' }, foot)
+  ));
+}
+function onPick(i, renderedAnswered){
+  var q = QUESTIONS[state.idx];
+  state.answers[q.id] = i;
+  save();
+  clearAdv();
+  if(renderedAnswered){
+    // user is reviewing / changing an existing answer — keep them here, just refresh selection + nav
+    renderQuiz();
+    return;
+  }
+  // first time this question is answered: highlight, then auto-advance
+  var cont = document.getElementById('opts');
+  if(cont){ var ch = cont.children; for(var k=0;k<ch.length;k++){ if(k === i) ch[k].classList.add('sel'); else ch[k].classList.remove('sel'); } }
+  advTimer = setTimeout(function(){
+    advTimer = null;
+    if(allAnswered()){ renderResults(); return; }
+    state.idx = Math.min(state.idx + 1, reachableMax());
+    save();
+    renderQuiz();
+  }, ADV_DELAY);
+}
+function goTo(i){
+  clearAdv();
+  i = Math.max(0, Math.min(i, reachableMax()));
+  state.idx = i;
+  save();
+  renderQuiz();
+}
+function resetAll(){
+  if(!window.confirm('¿Seguro que quieres empezar de nuevo? Se borrará todo tu progreso de este test.')) return;
+  clearStore();
+  clearAdv();
+  state = { answers:{}, idx:0 };
+  renderIntro();
+}
+
+// ---------- scoring ----------
+function val(q){ return q.vals[state.answers[q.id]]; }   // normalised 0..1 contribution (reverse already applied)
+function rawIdx(q){ return state.answers[q.id]; }         // chosen option index
+function logistic(x){ return 1 / (1 + Math.exp(-11 * (x - 0.45))); }
+
+function computeResult(){
+  // --- symptom load ---
+  var symItems = QUESTIONS.filter(function(q){ return (q.dim === 'IA' || q.dim === 'HI') && q.weight > 0; });
+  var sSum = 0; symItems.forEach(function(q){ sSum += val(q); });
+  var S_mean = sSum / symItems.length;
+
+  // DSM-5 style symptom count over the 18 canonical ASRS items, using the official "shaded box" thresholds
+  var iaCanon = QUESTIONS.filter(function(q){ return q.canon && q.dim === 'IA'; });
+  var hiCanon = QUESTIONS.filter(function(q){ return q.canon && q.dim === 'HI'; });
+  var dsm_IA = iaCanon.filter(function(q){ return rawIdx(q) >= q.dsmThr; }).length;
+  var dsm_HI = hiCanon.filter(function(q){ return rawIdx(q) >= q.dsmThr; }).length;
+  var dsm_total = dsm_IA + dsm_HI;
+
+  // ASRS Part A 6-question screener
+  var partA = QUESTIONS.filter(function(q){ return q.partA; });
+  var partA_count = partA.filter(function(q){ return rawIdx(q) >= q.dsmThr; }).length;
+  var partA_pos = partA_count >= 4;
+
+  // --- context: functional impact, persistence, cross-setting, childhood onset ---
+  var impItems = QUESTIONS.filter(function(q){ return q.dim === 'impact'; });
+  var iSum = 0; impItems.forEach(function(q){ iSum += val(q); });
+  var I_mean = iSum / impItems.length;
+
+  var X_set = val(QMAP.q_setting);
+  var P_chr = val(QMAP.q_persist);
+
+  var onItems = QUESTIONS.filter(function(q){ return q.dim === 'onset'; });
+  var oSum = 0, oW = 0; onItems.forEach(function(q){ oSum += val(q) * q.weight; oW += q.weight; });
+  var O_mean = oSum / oW;
+
+  var core = 0.60 * S_mean + 0.40 * (dsm_total / 18);
+  var context = 0.45 * I_mean + 0.20 * X_set + 0.20 * P_chr + 0.15 * O_mean;
+  var X = 0.65 * core + 0.35 * context; // 0..1
+
+  // --- non-linear (logistic) map to 1..1000, exact endpoints ---
+  var lo = logistic(0), hi = logistic(1);
+  var points = Math.round(1 + 999 * (logistic(X) - lo) / (hi - lo));
+  if(!isFinite(points)) points = 1;
+  points = Math.max(1, Math.min(1000, points));
+
+  var band = points <= 199 ? 'bajo' : points <= 449 ? 'medio' : points <= 724 ? 'alto' : 'muyalto';
+
+  // --- reliability / consistency checks ---
+  var dSum = 0, dN = 0;
+  PAIRS.forEach(function(p){
+    var qa = QMAP[p[0]], qb = QMAP[p[1]];
+    if(qa && qb && (qa.id in state.answers) && (qb.id in state.answers)){ dSum += Math.abs(val(qa) - val(qb)); dN++; }
+  });
+  var pairDisc = dN ? dSum / dN : 0;
+
+  var validityHits = 0;
+  QUESTIONS.filter(function(q){ return q.dim === 'validity'; }).forEach(function(q){ if(rawIdx(q) >= 3) validityHits++; });
+  var aq = QMAP.q_attn;
+  if(aq && (aq.id in state.answers) && rawIdx(aq) !== aq.expect) validityHits++;
+
+  var picks = [];
+  QUESTIONS.forEach(function(q){ var a = state.answers[q.id]; if(typeof a === 'number') picks.push(a); });
+  var straight = false;
+  if(picks.length >= 20){
+    var counts = {}, top = 0;
+    picks.forEach(function(v){ counts[v] = (counts[v] || 0) + 1; if(counts[v] > top) top = counts[v]; });
+    // Only flag near-perfect uniformity: a genuine responder can't reach this because the reverse-keyed
+    // items pull the opposite way. Picking literally the same option for every question is always flagged.
+    var allSame = picks.length === N && picks.every(function(v){ return v === picks[0]; });
+    if(allSame || top / picks.length >= 0.95) straight = true;
+  }
+
+  var lowRel = pairDisc > 0.45 || validityHits >= 1 || straight;
+  var modRel = !lowRel && pairDisc > 0.30;
+
+  var subtype = (dsm_IA >= 5 && dsm_HI >= 5) ? 'combinado'
+              : (dsm_IA >= 5) ? 'inatento'
+              : (dsm_HI >= 5) ? 'hiperactivo'
+              : 'ninguno';
+
+  return {
+    points:points, band:band, S_mean:S_mean,
+    dsm_IA:dsm_IA, dsm_HI:dsm_HI, dsm_total:dsm_total,
+    partA_pos:partA_pos, partA_count:partA_count,
+    I_mean:I_mean, X_set:X_set, P_chr:P_chr, O_mean:O_mean, X:X,
+    pairDisc:pairDisc, validityHits:validityHits, straight:straight,
+    lowRel:lowRel, modRel:modRel, subtype:subtype
+  };
+}
+
+// ---------- results screen ----------
+function reliabilityCard(r){
+  if(r.lowRel){
+    var reasons = [];
+    if(r.straight) reasons.push('respondiste casi siempre con la misma opción');
+    if(r.validityHits > 0) reasons.push('algunas respuestas eran poco realistas o no superaste un control de atención');
+    if(r.pairDisc > 0.45) reasons.push('preguntas que miden lo mismo recibieron respuestas contradictorias');
+    return el('div', { class:'card warn', style:'margin-top:14px' },
+      el('p', null, el('strong', null, '⚠ Fiabilidad baja. '), 'El resultado de arriba puede no reflejar tu situación real porque ' + reasons.join('; ') + '.'),
+      el('p', null, 'Te recomendamos repetir el cuestionario con tranquilidad, leyendo cada pregunta y respondiendo con sinceridad.')
+    );
+  }
+  if(r.modRel){
+    return el('div', { class:'card caution', style:'margin-top:14px' },
+      el('p', null, el('strong', null, 'Fiabilidad moderada. '), 'Hay algunas respuestas algo contradictorias entre preguntas que miden lo mismo. Toma el resultado como orientativo, con cierta cautela.')
+    );
+  }
+  return el('div', { class:'card ok', style:'margin-top:14px' },
+    el('p', null, el('strong', null, 'Fiabilidad: buena. '), 'No se han detectado contradicciones internas relevantes en tus respuestas.')
+  );
+}
+function subtypeText(r){
+  switch(r.subtype){
+    case 'combinado':   return 'Según tus respuestas alcanzas el umbral orientativo en las dos dimensiones (atención e hiperactividad-impulsividad): sería compatible con una presentación combinada.';
+    case 'inatento':    return 'Según tus respuestas alcanzas el umbral orientativo en atención, pero no en hiperactividad-impulsividad: sería más compatible con una presentación predominantemente inatenta.';
+    case 'hiperactivo': return 'Según tus respuestas alcanzas el umbral orientativo en hiperactividad-impulsividad, pero no en atención: sería más compatible con una presentación predominantemente hiperactiva-impulsiva.';
+    default:            return 'Según tus respuestas no se alcanza el umbral orientativo (5 o más síntomas frecuentes) en ninguna de las dos dimensiones.';
+  }
+}
+function answersDetails(){
+  var rows = QUESTIONS.map(function(q, i){
+    var a = state.answers[q.id];
+    return el('div', { class:'ansrow' },
+      el('div', { class:'q' }, (i + 1) + '. ' + q.text),
+      el('div', { class:'a' }, '→ ' + (typeof a === 'number' ? q.opts[a] : '(sin responder)'))
+    );
+  });
+  return el('details', null,
+    el('summary', null, 'Ver todas mis respuestas'),
+    el('div', { class:'body' }, rows)
+  );
+}
+function renderResults(){
+  clearAdv();
+  if(!allAnswered()){ renderQuiz(); return; }
+  var r = computeResult();
+  var b = BANDS[r.band];
+  var fillPct = Math.max(2, Math.round(r.points / 1000 * 100));
+
+  mount(el('div', { class:'wrap' },
+    el('h1', null, 'Tu resultado'),
+    el('div', { class:'scorewrap' },
+      el('div', { class:'score' }, String(r.points), el('small', null, ' / 1000')),
+      el('div', null, el('span', { class:'pill', style:'background:' + b.color }, 'Nivel: ' + b.label))
+    ),
+    el('div', { class:'scbar' }, el('i', { style:'width:' + fillPct + '%;background:' + b.color })),
+    el('div', { class:'scticks' }, el('span', null, '1'), el('span', null, 'Bajo'), el('span', null, 'Medio'), el('span', null, 'Alto'), el('span', null, 'Muy alto'), el('span', null, '1000')),
+    el('p', null, b.text),
+    reliabilityCard(r),
+    el('h2', null, 'Detalle (orientativo)'),
+    el('ul', { class:'brk' },
+      el('li', null, el('span', null, 'Síntomas de inatención marcados como frecuentes'), el('b', null, r.dsm_IA + ' / 9' + (r.dsm_IA >= 5 ? '  ✓' : ''))),
+      el('li', null, el('span', null, 'Síntomas de hiperactividad-impulsividad'), el('b', null, r.dsm_HI + ' / 9' + (r.dsm_HI >= 5 ? '  ✓' : ''))),
+      el('li', null, el('span', null, 'Cribado ASRS v1.1 — Parte A (6 preguntas)'), el('b', null, r.partA_count + ' / 6 → ' + (r.partA_pos ? 'positivo' : 'negativo')))
+    ),
+    el('p', { class:'fine' }, subtypeText(r), ' El umbral orientativo del DSM-5 para adultos es de 5 o más síntomas en una de las dos dimensiones, presentes desde la infancia (antes de los 12 años), en más de un ámbito y con impacto real. Estos recuentos siguen el método de la escala ASRS v1.1 y no equivalen a un diagnóstico clínico.'),
+    el('div', { class:'card', style:'margin-top:18px' },
+      el('p', null, el('strong', null, 'Recuerda: '), 'esto no es un diagnóstico. Solo un/a profesional de salud mental (psiquiatría o psicología clínica) puede diagnosticar un TDAH. Si el resultado te preocupa o estas dificultades afectan a tu día a día, pide cita y coméntalo.'),
+      el('p', { class:'fine' }, 'Si estás pasando por un momento de malestar emocional intenso, no esperes a este tipo de pruebas: busca apoyo profesional cuanto antes.')
+    ),
+    answersDetails(),
+    el('hr', { class:'sep' }),
+    btn('Revisar o cambiar mis respuestas', 'sec', function(){ state.idx = 0; save(); renderQuiz(); }),
+    btn('Empezar de nuevo', 'danger', resetAll),
+    btn('Volver al inicio', 'ghost', renderIntro),
+    sourcesDetails()
+  ));
+}
+
+// ---------- boot ----------
+function init(){
+  APP = document.getElementById('app');
+  load();
+  renderIntro();
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+})();
+</script>
+</body>
+</html>
