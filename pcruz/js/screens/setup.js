@@ -1,0 +1,94 @@
+import { getState, setState, patchUi } from '../state.js';
+import { FRAMES, FABRICS, findFabric, frameDims, stitchGrid } from '../lib/frames.js';
+import { fmtCm } from '../lib/pipeline.js';
+
+export function mountSetup(root) {
+  if (!getState().image) {
+    patchUi({ screen: 'pick-image' });
+    return;
+  }
+
+  root.innerHTML = `
+    <div class="screen">
+      <div class="screen-header">
+        <button class="back">‹ Imagen</button>
+        <h1>Marco y tela</h1>
+        <div class="spacer"></div>
+      </div>
+      <div class="screen-body">
+        <section class="section">
+          <h3>Tela</h3>
+          <div class="segmented" id="fabric"></div>
+          <p class="hint" id="fabric-hint"></p>
+        </section>
+        <section class="section">
+          <h3>Orientación</h3>
+          <div class="segmented" id="orientation">
+            <button data-value="portrait">Vertical</button>
+            <button data-value="landscape">Horizontal</button>
+          </div>
+        </section>
+        <section class="section">
+          <h3>Tamaño del marco (cm)</h3>
+          <div class="frame-grid" id="frames"></div>
+        </section>
+      </div>
+      <div class="screen-footer">
+        <button class="primary" id="next">Continuar</button>
+      </div>
+    </div>
+  `;
+
+  const fabricEl = root.querySelector('#fabric');
+  const orientationEl = root.querySelector('#orientation');
+  const framesEl = root.querySelector('#frames');
+  const hintEl = root.querySelector('#fabric-hint');
+
+  fabricEl.innerHTML = FABRICS.map((f) => `<button data-value="${f.count}">${f.label}</button>`).join('');
+
+  const refresh = () => {
+    const s = getState();
+    for (const b of fabricEl.children) b.classList.toggle('selected', Number(b.dataset.value) === s.count);
+    for (const b of orientationEl.children) b.classList.toggle('selected', b.dataset.value === s.orientation);
+    const fabric = findFabric(s.count);
+    hintEl.textContent = `${fabric.label}: ${fabric.count} puntos por pulgada (${fmtCm((fabric.count / 2.54).toFixed(1))} por cm), ` +
+      `se borda con ${fabric.strands} hebras. Aida 14 es la más común; un número mayor da más detalle.`;
+    renderFrames(framesEl, s);
+  };
+
+  fabricEl.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (b) { setState({ count: Number(b.dataset.value) }); refresh(); }
+  });
+  orientationEl.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (b) { setState({ orientation: b.dataset.value }); refresh(); }
+  });
+  framesEl.addEventListener('click', (e) => {
+    const card = e.target.closest('.frame-card');
+    if (card) { setState({ frameId: card.dataset.id }); refresh(); }
+  });
+  root.querySelector('.back').addEventListener('click', () => patchUi({ screen: 'pick-image' }));
+  root.querySelector('#next').addEventListener('click', () => patchUi({ screen: 'crop' }));
+
+  refresh();
+}
+
+function renderFrames(container, s) {
+  const maxSide = 48;
+  const longest = Math.max(...FRAMES.map((f) => f.h));
+  container.innerHTML = FRAMES.map((f) => {
+    const { wCm, hCm } = frameDims(f, s.orientation);
+    const { cols, rows } = stitchGrid(f, s.count, s.orientation);
+    // Shapes share one scale so the cards also show relative size.
+    const k = maxSide / longest;
+    const w = Math.max(10, Math.round(wCm * k));
+    const h = Math.max(10, Math.round(hCm * k));
+    return `
+      <button class="frame-card${f.id === s.frameId ? ' selected' : ''}" data-id="${f.id}">
+        <div class="frame-shape-box"><div class="frame-shape" style="width:${w}px;height:${h}px"></div></div>
+        <div class="frame-label">${f.name ? f.name + ' · ' : ''}${fmtCm(wCm)} × ${fmtCm(hCm)}</div>
+        <div class="frame-sub">${cols} × ${rows} puntos</div>
+      </button>`;
+  }).join('');
+}
