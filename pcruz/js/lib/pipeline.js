@@ -3,7 +3,6 @@ import { cropRect } from './crop.js';
 import { resampleArea, fabricMask, stitchedCells } from './resample.js';
 import { buildPattern } from './quantize.js';
 import { bitmapPixels } from './image-io.js';
-import { STITCHES_PER_DAY } from './constants.js';
 
 // The photo's pixels and the per-stitch colours are the slow parts; both are
 // cached so moving the colour slider only re-runs the quantizer.
@@ -52,8 +51,9 @@ export function stitchCount(state) {
   return stitchedCells(image.w, image.h, rect, cols, rows);
 }
 
-export function daysToStitch(stitches) {
-  return Math.ceil(stitches / STITCHES_PER_DAY);
+/** Whole days to stitch `stitches` cuadritos at `perDay` a day. */
+export function daysToStitch(stitches, perDay) {
+  return Math.ceil(stitches / perDay);
 }
 
 /** Days in words for long projects ('' when the day count says enough). */

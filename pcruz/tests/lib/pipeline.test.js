@@ -3,7 +3,6 @@ import { gridFor, aspectFor, metaFor, fmtCm, stitchCount, daysToStitch, duration
 import { patternSummary, summaryLine, rgbaToRgb } from '../../js/lib/exporters.js';
 import { defaultSettings } from '../../js/state.js';
 import { stitchesPerSkein } from '../../js/lib/skeins.js';
-import { STITCHES_PER_DAY } from '../../js/lib/constants.js';
 
 const settings = (patch) => ({ ...defaultSettings(), ...patch });
 
@@ -49,13 +48,13 @@ describe('stitch time estimate', () => {
     expect(stitchCount({ ...base, count: 18 })).toBeGreaterThan(stitchCount({ ...base, count: 11 }));
   });
 
-  it('turns stitches into whole days at the daily pace', () => {
-    expect(STITCHES_PER_DAY).toBe(30);
-    expect(daysToStitch(0)).toBe(0);
-    expect(daysToStitch(1)).toBe(1);
-    expect(daysToStitch(30)).toBe(1);
-    expect(daysToStitch(31)).toBe(2);
-    expect(daysToStitch(5890)).toBe(197);
+  it('turns cuadritos into whole days at the daily pace', () => {
+    expect(daysToStitch(0, 30)).toBe(0);
+    expect(daysToStitch(1, 30)).toBe(1);
+    expect(daysToStitch(30, 30)).toBe(1);
+    expect(daysToStitch(31, 30)).toBe(2);
+    expect(daysToStitch(5890, 30)).toBe(197);
+    expect(daysToStitch(5890, 60)).toBe(99);
   });
 
   it('adds months or years only for long projects', () => {

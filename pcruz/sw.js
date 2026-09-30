@@ -32,6 +32,7 @@ const CORE_ASSETS = [
   'js/lib/image-io.js',
   'js/lib/install-hint.js',
   'js/lib/layout.js',
+  'js/lib/pace.js',
   'js/lib/pdf-writer.js',
   'js/lib/pipeline.js',
   'js/lib/png-encode.js',

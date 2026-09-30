@@ -14,9 +14,6 @@ export const MAX_FILE_BYTES = 50 * 1024 * 1024;
 // photo and the frame. It has no palette entry, symbol or stitches.
 export const FABRIC = 0xffff;
 
-// Rough stitching pace used for the time estimate on the frame screen.
-export const STITCHES_PER_DAY = 30;
-
 export const MIN_COLORS = 2;
 export const MAX_COLORS = 60;
 export const DEFAULT_COLORS = 20;
@@ -30,4 +27,4 @@ export const MAX_CELL_PX = 32;
 // Bump this in lockstep with version.json on every deploy. Installed PWAs
 // compare it against the server's version.json to decide whether to show the
 // blocking update modal.
-export const APP_VERSION = '0.2.1';
+export const APP_VERSION = '0.2.2';

@@ -140,7 +140,7 @@ function drawSummaryPage(ctx, pattern, meta, tiles, pageNo, total) {
   const lines = [
     `Marco: ${meta.frameLabel} cm (${meta.orientationLabel})`,
     `Tela: ${meta.fabricLabel} · ${meta.strands} hebras`,
-    `Tamaño del patrón: ${pattern.cols} × ${pattern.rows} puntos (${fmtInt(s.stitches)} puntadas)`,
+    `Tamaño del patrón: ${pattern.cols} × ${pattern.rows} puntos (${fmtInt(s.stitches)} cuadritos a bordar)`,
     `Colores DMC: ${s.colors} · Madejas estimadas: ${s.skeins}`
   ];
   ctx.textAlign = 'left';

@@ -88,7 +88,7 @@ export function mountPattern(root) {
     const sum = patternSummary(pattern, meta);
     summaryEl.innerHTML = `
       <strong>${pattern.cols} × ${pattern.rows} puntos</strong> · ${meta.frameLabel} cm · ${meta.fabricLabel} (${meta.strands} hebras)<br>
-      <strong>${sum.colors} colores DMC</strong> · ${sum.stitches.toLocaleString('es-ES')} puntadas · ~${sum.skeins} madejas
+      <strong>${sum.colors} colores DMC</strong> · ${sum.stitches.toLocaleString('es-ES')} cuadritos · ~${sum.skeins} madejas
     `;
     legendEl.innerHTML = pattern.palette.map((e) => `
       <div class="legend-row">

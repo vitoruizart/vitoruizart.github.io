@@ -1,7 +1,7 @@
 import { getState, setState, patchUi } from '../state.js';
 import { FRAMES, FABRICS, findFabric, frameDims, stitchGrid } from '../lib/frames.js';
 import { fmtCm, stitchCount, daysToStitch, durationLabel } from '../lib/pipeline.js';
-import { STITCHES_PER_DAY } from '../lib/constants.js';
+import { loadPace, savePace, MIN_PACE, MAX_PACE, PACE_STEP } from '../lib/pace.js';
 
 export function mountSetup(root) {
   if (!getState().image) {
@@ -30,6 +30,15 @@ export function mountSetup(root) {
           </div>
         </section>
         <section class="section">
+          <h3>Ritmo de bordado</h3>
+          <div class="slider-row">
+            <label for="pace">Al día</label>
+            <input type="range" id="pace" min="${MIN_PACE}" max="${MAX_PACE}" step="${PACE_STEP}">
+            <span class="value" id="pace-val"></span>
+          </div>
+          <p class="hint">Cuadritos que bordas en un día (cada cuadrito son dos puntadas). Con este ritmo se calculan los días de cada marco.</p>
+        </section>
+        <section class="section">
           <h3>Tamaño del marco (cm)</h3>
           <div class="frame-grid" id="frames"></div>
           <p class="hint" id="time-hint"></p>
@@ -46,6 +55,10 @@ export function mountSetup(root) {
   const framesEl = root.querySelector('#frames');
   const hintEl = root.querySelector('#fabric-hint');
   const timeEl = root.querySelector('#time-hint');
+  const paceEl = root.querySelector('#pace');
+  const paceValEl = root.querySelector('#pace-val');
+  let perDay = loadPace();
+  paceEl.value = String(perDay);
 
   fabricEl.innerHTML = FABRICS.map((f) => `<button data-value="${f.count}">${f.label}</button>`).join('');
 
@@ -56,12 +69,13 @@ export function mountSetup(root) {
     const fabric = findFabric(s.count);
     hintEl.textContent = `${fabric.label}: ${fabric.count} puntos por pulgada (${fmtCm((fabric.count / 2.54).toFixed(1))} por cm), ` +
       `se borda con ${fabric.strands} hebras. Aida 14 es la más común; un número mayor da más detalle.`;
-    renderFrames(framesEl, s);
+    paceValEl.textContent = String(perDay);
+    renderFrames(framesEl, s, perDay);
     const stitches = stitchCount(s);
-    const days = daysToStitch(stitches);
+    const days = daysToStitch(stitches, perDay);
     const span = durationLabel(days);
-    timeEl.textContent = `Tiempo estimado a ${STITCHES_PER_DAY} puntos al día: ${fmtDays(days)}${span ? ` (${span})` : ''} ` +
-      `para unas ${stitches.toLocaleString('es-ES')} puntadas. Cuenta con el encuadre actual; el margen blanco no se borda.`;
+    timeEl.textContent = `Tiempo estimado a ${perDay} cuadritos al día: ${fmtDays(days)}${span ? ` (${span})` : ''} ` +
+      `para unos ${stitches.toLocaleString('es-ES')} cuadritos. Cuenta con el encuadre actual; el margen blanco no se borda.`;
   };
 
   fabricEl.addEventListener('click', (e) => {
@@ -71,6 +85,11 @@ export function mountSetup(root) {
   orientationEl.addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (b) { setState({ orientation: b.dataset.value }); refresh(); }
+  });
+  paceEl.addEventListener('input', () => {
+    perDay = Number(paceEl.value);
+    savePace(perDay);
+    refresh();
   });
   framesEl.addEventListener('click', (e) => {
     const card = e.target.closest('.frame-card');
@@ -82,13 +101,13 @@ export function mountSetup(root) {
   refresh();
 }
 
-function renderFrames(container, s) {
+function renderFrames(container, s, perDay) {
   const maxSide = 48;
   const longest = Math.max(...FRAMES.map((f) => f.h));
   container.innerHTML = FRAMES.map((f) => {
     const { wCm, hCm } = frameDims(f, s.orientation);
     const { cols, rows } = stitchGrid(f, s.count, s.orientation);
-    const days = daysToStitch(stitchCount({ ...s, frameId: f.id }));
+    const days = daysToStitch(stitchCount({ ...s, frameId: f.id }), perDay);
     // Shapes share one scale so the cards also show relative size.
     const k = maxSide / longest;
     const w = Math.max(10, Math.round(wCm * k));
