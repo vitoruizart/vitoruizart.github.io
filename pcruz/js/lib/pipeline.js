@@ -1,8 +1,9 @@
 import { findFrame, findFabric, frameDims, stitchGrid } from './frames.js';
 import { cropRect } from './crop.js';
-import { resampleArea, fabricMask } from './resample.js';
+import { resampleArea, fabricMask, stitchedCells } from './resample.js';
 import { buildPattern } from './quantize.js';
 import { bitmapPixels } from './image-io.js';
+import { STITCHES_PER_DAY } from './constants.js';
 
 // The photo's pixels and the per-stitch colours are the slow parts; both are
 // cached so moving the colour slider only re-runs the quantizer.
@@ -37,6 +38,30 @@ export function metaFor(state) {
 
 export function fmtCm(v) {
   return String(v).replace('.', ',');
+}
+
+/**
+ * Stitches the design will have with the current framing: one per cell over
+ * the photo (the white margin is bare fabric). Geometry only, so it is cheap
+ * enough to run for every frame size before the pattern exists.
+ */
+export function stitchCount(state) {
+  const { image } = state;
+  const { cols, rows } = gridFor(state);
+  const rect = cropRect(image.w, image.h, cols / rows, state.crop);
+  return stitchedCells(image.w, image.h, rect, cols, rows);
+}
+
+export function daysToStitch(stitches) {
+  return Math.ceil(stitches / STITCHES_PER_DAY);
+}
+
+/** Days in words for long projects ('' when the day count says enough). */
+export function durationLabel(days) {
+  if (days < 60) return '';
+  const months = Math.round(days / 30.44);
+  if (months < 24) return `unos ${months} meses`;
+  return `unos ${Math.round(days / 365.25)} años`;
 }
 
 export function computePattern(state) {

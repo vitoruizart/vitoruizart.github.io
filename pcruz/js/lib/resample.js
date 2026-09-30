@@ -50,15 +50,31 @@ export function resampleArea(src, rect, outW, outH) {
  * centre keeps the photo's edge crisp instead of a row of half-blended cells.
  */
 export function fabricMask(imgW, imgH, rect, outW, outH) {
+  const inX = centresInside(rect.x, rect.w, outW, imgW);
+  const inY = centresInside(rect.y, rect.h, outH, imgH);
   const mask = new Uint8Array(outW * outH);
   for (let cy = 0; cy < outH; cy++) {
-    const y = rect.y + ((cy + 0.5) * rect.h) / outH;
     for (let cx = 0; cx < outW; cx++) {
-      const x = rect.x + ((cx + 0.5) * rect.w) / outW;
-      if (x < 0 || x >= imgW || y < 0 || y >= imgH) mask[cy * outW + cx] = 1;
+      if (!inX[cx] || !inY[cy]) mask[cy * outW + cx] = 1;
     }
   }
   return mask;
+}
+
+/** How many cells fabricMask leaves stitched, without building the mask. */
+export function stitchedCells(imgW, imgH, rect, outW, outH) {
+  const count = (flags) => flags.reduce((n, f) => n + f, 0);
+  return count(centresInside(rect.x, rect.w, outW, imgW)) * count(centresInside(rect.y, rect.h, outH, imgH));
+}
+
+// Per cell along one axis: 1 if its centre lies on the image.
+function centresInside(start, length, count, limit) {
+  const flags = new Uint8Array(count);
+  for (let c = 0; c < count; c++) {
+    const p = start + ((c + 0.5) * length) / count;
+    flags[c] = p >= 0 && p < limit ? 1 : 0;
+  }
+  return flags;
 }
 
 // For each output cell along one axis: flat [pixelIndex, weight, ...] list

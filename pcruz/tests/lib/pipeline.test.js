@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { gridFor, aspectFor, metaFor, fmtCm } from '../../js/lib/pipeline.js';
+import { gridFor, aspectFor, metaFor, fmtCm, stitchCount, daysToStitch, durationLabel } from '../../js/lib/pipeline.js';
 import { patternSummary, summaryLine, rgbaToRgb } from '../../js/lib/exporters.js';
 import { defaultSettings } from '../../js/state.js';
 import { stitchesPerSkein } from '../../js/lib/skeins.js';
+import { STITCHES_PER_DAY } from '../../js/lib/constants.js';
 
 const settings = (patch) => ({ ...defaultSettings(), ...patch });
 
@@ -22,6 +23,48 @@ describe('pipeline helpers', () => {
     const m = metaFor(settings({ frameId: 'a4', count: 11, orientation: 'landscape' }));
     expect(m).toEqual({ frameLabel: '29,7 × 21', orientationLabel: 'horizontal', fabricLabel: 'Aida 11', count: 11, strands: 3 });
     expect(metaFor(settings({ frameId: '30x30' })).orientationLabel).toBe('cuadrado');
+  });
+});
+
+describe('stitch time estimate', () => {
+  const image = { w: 1000, h: 1000 };
+
+  it('counts every cell when the photo fills the frame', () => {
+    // Square 30×30 frame on Aida 14 → 165×165 grid; "cover" crop = no margin.
+    const s = settings({ image, frameId: '30x30', count: 14, crop: { cx: 0.5, cy: 0.5, zoom: 1 } });
+    expect(stitchCount(s)).toBe(165 * 165);
+  });
+
+  it('leaves the white margin out', () => {
+    // zoom 0.5: the photo covers the middle half of each side.
+    const s = settings({ image, frameId: '30x30', count: 14, crop: { cx: 0.5, cy: 0.5, zoom: 0.5 } });
+    const n = stitchCount(s);
+    expect(n).toBeGreaterThan(82 * 82);
+    expect(n).toBeLessThanOrEqual(83 * 83);
+  });
+
+  it('follows the frame and fabric passed in the settings', () => {
+    const base = settings({ image, crop: { cx: 0.5, cy: 0.5, zoom: 1 } });
+    expect(stitchCount({ ...base, frameId: '40x40' })).toBeGreaterThan(stitchCount({ ...base, frameId: '20x20' }));
+    expect(stitchCount({ ...base, count: 18 })).toBeGreaterThan(stitchCount({ ...base, count: 11 }));
+  });
+
+  it('turns stitches into whole days at the daily pace', () => {
+    expect(STITCHES_PER_DAY).toBe(30);
+    expect(daysToStitch(0)).toBe(0);
+    expect(daysToStitch(1)).toBe(1);
+    expect(daysToStitch(30)).toBe(1);
+    expect(daysToStitch(31)).toBe(2);
+    expect(daysToStitch(5890)).toBe(197);
+  });
+
+  it('adds months or years only for long projects', () => {
+    expect(durationLabel(59)).toBe('');
+    expect(durationLabel(60)).toBe('unos 2 meses');
+    expect(durationLabel(197)).toBe('unos 6 meses');
+    expect(durationLabel(700)).toBe('unos 23 meses');
+    expect(durationLabel(800)).toBe('unos 2 años');
+    expect(durationLabel(5850)).toBe('unos 16 años');
   });
 });
 

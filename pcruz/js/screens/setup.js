@@ -1,6 +1,7 @@
 import { getState, setState, patchUi } from '../state.js';
 import { FRAMES, FABRICS, findFabric, frameDims, stitchGrid } from '../lib/frames.js';
-import { fmtCm } from '../lib/pipeline.js';
+import { fmtCm, stitchCount, daysToStitch, durationLabel } from '../lib/pipeline.js';
+import { STITCHES_PER_DAY } from '../lib/constants.js';
 
 export function mountSetup(root) {
   if (!getState().image) {
@@ -31,6 +32,7 @@ export function mountSetup(root) {
         <section class="section">
           <h3>Tamaño del marco (cm)</h3>
           <div class="frame-grid" id="frames"></div>
+          <p class="hint" id="time-hint"></p>
         </section>
       </div>
       <div class="screen-footer">
@@ -43,6 +45,7 @@ export function mountSetup(root) {
   const orientationEl = root.querySelector('#orientation');
   const framesEl = root.querySelector('#frames');
   const hintEl = root.querySelector('#fabric-hint');
+  const timeEl = root.querySelector('#time-hint');
 
   fabricEl.innerHTML = FABRICS.map((f) => `<button data-value="${f.count}">${f.label}</button>`).join('');
 
@@ -54,6 +57,11 @@ export function mountSetup(root) {
     hintEl.textContent = `${fabric.label}: ${fabric.count} puntos por pulgada (${fmtCm((fabric.count / 2.54).toFixed(1))} por cm), ` +
       `se borda con ${fabric.strands} hebras. Aida 14 es la más común; un número mayor da más detalle.`;
     renderFrames(framesEl, s);
+    const stitches = stitchCount(s);
+    const days = daysToStitch(stitches);
+    const span = durationLabel(days);
+    timeEl.textContent = `Tiempo estimado a ${STITCHES_PER_DAY} puntos al día: ${fmtDays(days)}${span ? ` (${span})` : ''} ` +
+      `para unas ${stitches.toLocaleString('es-ES')} puntadas. Cuenta con el encuadre actual; el margen blanco no se borda.`;
   };
 
   fabricEl.addEventListener('click', (e) => {
@@ -80,6 +88,7 @@ function renderFrames(container, s) {
   container.innerHTML = FRAMES.map((f) => {
     const { wCm, hCm } = frameDims(f, s.orientation);
     const { cols, rows } = stitchGrid(f, s.count, s.orientation);
+    const days = daysToStitch(stitchCount({ ...s, frameId: f.id }));
     // Shapes share one scale so the cards also show relative size.
     const k = maxSide / longest;
     const w = Math.max(10, Math.round(wCm * k));
@@ -89,6 +98,11 @@ function renderFrames(container, s) {
         <div class="frame-shape-box"><div class="frame-shape" style="width:${w}px;height:${h}px"></div></div>
         <div class="frame-label">${f.name ? f.name + ' · ' : ''}${fmtCm(wCm)} × ${fmtCm(hCm)}</div>
         <div class="frame-sub">${cols} × ${rows} puntos</div>
+        <div class="frame-days">${fmtDays(days)}</div>
       </button>`;
   }).join('');
+}
+
+function fmtDays(days) {
+  return `≈ ${days.toLocaleString('es-ES')} ${days === 1 ? 'día' : 'días'}`;
 }

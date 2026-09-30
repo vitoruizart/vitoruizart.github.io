@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resampleArea, fabricMask } from '../../js/lib/resample.js';
+import { resampleArea, fabricMask, stitchedCells } from '../../js/lib/resample.js';
 
 function image(width, height, fill) {
   const data = new Uint8ClampedArray(width * height * 4);
@@ -77,5 +77,20 @@ describe('fabricMask', () => {
   it('works on both axes', () => {
     const mask = fabricMask(10, 10, { x: -10, y: -10, w: 30, h: 30 }, 3, 3);
     expect(Array.from(mask)).toEqual([1, 1, 1, 1, 0, 1, 1, 1, 1]);
+  });
+});
+
+describe('stitchedCells', () => {
+  it('counts exactly the cells fabricMask leaves stitched', () => {
+    const rects = [
+      { x: 10, y: 10, w: 80, h: 80 },
+      { x: -25, y: 0, w: 150, h: 100 },
+      { x: -10, y: -37.5, w: 160, h: 175 },
+      { x: 60, y: 70, w: 90, h: 50 }
+    ];
+    for (const rect of rects) {
+      const zeros = fabricMask(100, 100, rect, 17, 23).filter((v) => v === 0).length;
+      expect(stitchedCells(100, 100, rect, 17, 23)).toBe(zeros);
+    }
   });
 });
