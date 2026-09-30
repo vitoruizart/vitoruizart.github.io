@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { gridFor, aspectFor, metaFor, fmtCm, stitchCount, hoursToStitch } from '../../js/lib/pipeline.js';
+import { gridFor, aspectFor, metaFor, fmtCm, stitchCount, hoursToStitch, fmtHours } from '../../js/lib/pipeline.js';
 import { patternSummary, summaryLine, rgbaToRgb } from '../../js/lib/exporters.js';
 import { defaultSettings } from '../../js/state.js';
 import { stitchesPerSkein } from '../../js/lib/skeins.js';
@@ -55,6 +55,12 @@ describe('stitch time estimate', () => {
     expect(hoursToStitch(31, 30)).toBe(2);
     expect(hoursToStitch(5890, 30)).toBe(197);
     expect(hoursToStitch(5890, 60)).toBe(99);
+  });
+
+  it('formats hours in Spanish, singular for one', () => {
+    expect(fmtHours(1)).toBe('≈ 1 hora');
+    expect(fmtHours(205)).toBe('≈ 205 horas');
+    expect(fmtHours(12345)).toBe('≈ 12.345 horas');
   });
 });
 

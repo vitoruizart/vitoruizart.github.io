@@ -56,6 +56,10 @@ export function hoursToStitch(stitches, perHour) {
   return Math.ceil(stitches / perHour);
 }
 
+export function fmtHours(hours) {
+  return `≈ ${hours.toLocaleString('es-ES')} ${hours === 1 ? 'hora' : 'horas'}`;
+}
+
 export function computePattern(state) {
   const { image } = state;
   const { cols, rows } = gridFor(state);

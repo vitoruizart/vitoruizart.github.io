@@ -1,6 +1,6 @@
 import { getState, setState, patchUi } from '../state.js';
 import { FRAMES, FABRICS, findFabric, frameDims, stitchGrid } from '../lib/frames.js';
-import { fmtCm, stitchCount, hoursToStitch } from '../lib/pipeline.js';
+import { fmtCm, stitchCount, hoursToStitch, fmtHours } from '../lib/pipeline.js';
 import { loadPace, savePace, MIN_PACE, MAX_PACE, PACE_STEP } from '../lib/pace.js';
 
 export function mountSetup(root) {
@@ -118,8 +118,4 @@ function renderFrames(container, s, perHour) {
         <div class="frame-time">${fmtHours(hours)}</div>
       </button>`;
   }).join('');
-}
-
-function fmtHours(hours) {
-  return `≈ ${hours.toLocaleString('es-ES')} ${hours === 1 ? 'hora' : 'horas'}`;
 }

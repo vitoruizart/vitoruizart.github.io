@@ -1,9 +1,10 @@
 import { getState, setState, patchUi, defaultSettings } from '../state.js';
-import { computePattern, metaFor } from '../lib/pipeline.js';
+import { computePattern, metaFor, hoursToStitch, fmtHours } from '../lib/pipeline.js';
 import { patternSummary, previewCanvas } from '../lib/exporters.js';
 import { textColorFor } from '../lib/color.js';
 import { skeinsNeeded } from '../lib/skeins.js';
 import { clearDraft } from '../lib/drafts.js';
+import { loadPace } from '../lib/pace.js';
 import { MIN_COLORS, MAX_COLORS } from '../lib/constants.js';
 import { showToast } from '../components/toast.js';
 
@@ -86,9 +87,11 @@ export function mountPattern(root) {
     preview.getContext('2d').drawImage(previewCanvas(pattern), 0, 0);
 
     const sum = patternSummary(pattern, meta);
+    const perHour = loadPace();
     summaryEl.innerHTML = `
       <strong>${pattern.cols} × ${pattern.rows} puntos</strong> · ${meta.frameLabel} cm · ${meta.fabricLabel} (${meta.strands} hebras)<br>
-      <strong>${sum.colors} colores DMC</strong> · ${sum.stitches.toLocaleString('es-ES')} cuadritos · ~${sum.skeins} madejas
+      <strong>${sum.colors} colores DMC</strong> · ${sum.stitches.toLocaleString('es-ES')} cuadritos · ~${sum.skeins} madejas<br>
+      <strong>${fmtHours(hoursToStitch(sum.stitches, perHour))}</strong> de bordado a ${perHour} cuadritos por hora
     `;
     legendEl.innerHTML = pattern.palette.map((e) => `
       <div class="legend-row">
