@@ -51,17 +51,9 @@ export function stitchCount(state) {
   return stitchedCells(image.w, image.h, rect, cols, rows);
 }
 
-/** Whole days to stitch `stitches` cuadritos at `perDay` a day. */
-export function daysToStitch(stitches, perDay) {
-  return Math.ceil(stitches / perDay);
-}
-
-/** Days in words for long projects ('' when the day count says enough). */
-export function durationLabel(days) {
-  if (days < 60) return '';
-  const months = Math.round(days / 30.44);
-  if (months < 24) return `unos ${months} meses`;
-  return `unos ${Math.round(days / 365.25)} años`;
+/** Whole hours to stitch `stitches` cuadritos at `perHour` an hour. */
+export function hoursToStitch(stitches, perHour) {
+  return Math.ceil(stitches / perHour);
 }
 
 export function computePattern(state) {

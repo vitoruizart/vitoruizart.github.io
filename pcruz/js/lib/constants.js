@@ -27,4 +27,4 @@ export const MAX_CELL_PX = 32;
 // Bump this in lockstep with version.json on every deploy. Installed PWAs
 // compare it against the server's version.json to decide whether to show the
 // blocking update modal.
-export const APP_VERSION = '0.2.2';
+export const APP_VERSION = '0.2.3';

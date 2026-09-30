@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { gridFor, aspectFor, metaFor, fmtCm, stitchCount, daysToStitch, durationLabel } from '../../js/lib/pipeline.js';
+import { gridFor, aspectFor, metaFor, fmtCm, stitchCount, hoursToStitch } from '../../js/lib/pipeline.js';
 import { patternSummary, summaryLine, rgbaToRgb } from '../../js/lib/exporters.js';
 import { defaultSettings } from '../../js/state.js';
 import { stitchesPerSkein } from '../../js/lib/skeins.js';
@@ -48,22 +48,13 @@ describe('stitch time estimate', () => {
     expect(stitchCount({ ...base, count: 18 })).toBeGreaterThan(stitchCount({ ...base, count: 11 }));
   });
 
-  it('turns cuadritos into whole days at the daily pace', () => {
-    expect(daysToStitch(0, 30)).toBe(0);
-    expect(daysToStitch(1, 30)).toBe(1);
-    expect(daysToStitch(30, 30)).toBe(1);
-    expect(daysToStitch(31, 30)).toBe(2);
-    expect(daysToStitch(5890, 30)).toBe(197);
-    expect(daysToStitch(5890, 60)).toBe(99);
-  });
-
-  it('adds months or years only for long projects', () => {
-    expect(durationLabel(59)).toBe('');
-    expect(durationLabel(60)).toBe('unos 2 meses');
-    expect(durationLabel(197)).toBe('unos 6 meses');
-    expect(durationLabel(700)).toBe('unos 23 meses');
-    expect(durationLabel(800)).toBe('unos 2 años');
-    expect(durationLabel(5850)).toBe('unos 16 años');
+  it('turns cuadritos into whole hours at the hourly pace', () => {
+    expect(hoursToStitch(0, 30)).toBe(0);
+    expect(hoursToStitch(1, 30)).toBe(1);
+    expect(hoursToStitch(30, 30)).toBe(1);
+    expect(hoursToStitch(31, 30)).toBe(2);
+    expect(hoursToStitch(5890, 30)).toBe(197);
+    expect(hoursToStitch(5890, 60)).toBe(99);
   });
 });
 

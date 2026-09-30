@@ -13,7 +13,7 @@ function stubStorage() {
 afterEach(() => { delete globalThis.localStorage; });
 
 describe('sanitizePace', () => {
-  it('defaults to 30 cuadritos a day', () => {
+  it('defaults to 30 cuadritos an hour', () => {
     expect(DEFAULT_PACE).toBe(30);
     expect(sanitizePace(null)).toBe(30);
     expect(sanitizePace('')).toBe(30);
@@ -47,13 +47,21 @@ describe('loadPace / savePace', () => {
     const map = stubStorage();
     savePace(99999);
     expect(loadPace()).toBe(MAX_PACE);
-    map.set('pcruz:stitchesPerDay', '<script>');
+    map.set('pcruz:stitchesPerHour', '<script>');
     expect(loadPace()).toBe(DEFAULT_PACE);
   });
 
   it('falls back to the default when storage is unavailable', () => {
     globalThis.localStorage = { getItem: () => { throw new Error('denied'); }, setItem: () => { throw new Error('denied'); } };
     expect(() => savePace(60)).not.toThrow();
+    expect(loadPace()).toBe(DEFAULT_PACE);
+  });
+});
+
+describe('old per-day setting', () => {
+  it('is ignored: it meant cuadritos a day, not an hour', () => {
+    const map = stubStorage();
+    map.set('pcruz:stitchesPerDay', '55');
     expect(loadPace()).toBe(DEFAULT_PACE);
   });
 });

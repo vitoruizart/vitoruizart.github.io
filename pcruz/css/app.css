@@ -183,7 +183,7 @@ input[type="range"] {
 }
 .frame-card .frame-label { font-size: 14px; font-weight: 600; }
 .frame-card .frame-sub { font-size: 11px; color: var(--text-muted); }
-.frame-card .frame-days { font-size: 11px; color: var(--text); }
+.frame-card .frame-time { font-size: 11px; color: var(--text); }
 
 /* Crop */
 .crop-stage,
