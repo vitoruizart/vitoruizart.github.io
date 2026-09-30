@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resampleArea } from '../../js/lib/resample.js';
+import { resampleArea, fabricMask } from '../../js/lib/resample.js';
 
 function image(width, height, fill) {
   const data = new Uint8ClampedArray(width * height * 4);
@@ -52,5 +52,30 @@ describe('resampleArea', () => {
     const src = image(1, 1, () => [0, 0, 0, 0]);
     const out = resampleArea(src, { x: 0, y: 0, w: 1, h: 1 }, 1, 1);
     expect(Array.from(out)).toEqual([255, 255, 255]);
+  });
+});
+
+describe('fabricMask', () => {
+  it('marks nothing when the rect lies inside the image', () => {
+    expect(Array.from(fabricMask(100, 100, { x: 10, y: 10, w: 80, h: 80 }, 4, 4)).every((v) => v === 0)).toBe(true);
+  });
+
+  it('marks cells whose centre falls outside the image', () => {
+    // 100 px image, rect 150 px wide starting at -25 → 6 cells of 25 px; the
+    // first and last lie off the image.
+    const mask = fabricMask(100, 100, { x: -25, y: 0, w: 150, h: 100 }, 6, 1);
+    expect(Array.from(mask)).toEqual([1, 0, 0, 0, 0, 1]);
+  });
+
+  it('decides straddling cells by their centre', () => {
+    // Cells 40 px wide from -10: cell 0 spans -10..30 (centre 10, image),
+    // cell 2 spans 70..110 (centre 90, image), cell 3 spans 110..150 (fabric).
+    const mask = fabricMask(100, 100, { x: -10, y: 0, w: 160, h: 100 }, 4, 1);
+    expect(Array.from(mask)).toEqual([0, 0, 0, 1]);
+  });
+
+  it('works on both axes', () => {
+    const mask = fabricMask(10, 10, { x: -10, y: -10, w: 30, h: 30 }, 3, 3);
+    expect(Array.from(mask)).toEqual([1, 1, 1, 1, 0, 1, 1, 1, 1]);
   });
 });

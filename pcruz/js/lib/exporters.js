@@ -5,6 +5,7 @@ import { deflate } from './zlib.js';
 import { drawChart, drawLegend, FONT } from './chart-render.js';
 import { sheetLayout, pickCellPx, paginate, legendGrid, PDF, LEGEND_COL_UNITS } from './layout.js';
 import { skeinsNeeded } from './skeins.js';
+import { FABRIC } from './constants.js';
 
 // Rendering strips/pages is synchronous canvas work; yielding between them
 // lets the progress text repaint.
@@ -16,7 +17,8 @@ const fmtInt = (n) => n.toLocaleString('es-ES');
  * meta: { frameLabel, orientationLabel, fabricLabel, count, strands }
  */
 export function patternSummary(pattern, meta) {
-  const stitches = pattern.cols * pattern.rows;
+  // Bare-fabric margin cells have no palette entry, so they are not counted.
+  const stitches = pattern.palette.reduce((sum, e) => sum + e.count, 0);
   const skeins = pattern.palette.reduce((sum, e) => sum + skeinsNeeded(e.count, meta.count, meta.strands), 0);
   return { stitches, skeins, colors: pattern.palette.length };
 }
@@ -224,14 +226,15 @@ function drawTilePage(ctx, pattern, tile, pageNo, total) {
   });
 }
 
-/** One pixel per stitch, in thread colours. */
+/** One pixel per stitch, in thread colours; bare fabric is white. */
 export function previewCanvas(pattern) {
   const canvas = makeCanvas(pattern.cols, pattern.rows);
   const ctx = canvas.getContext('2d');
   const img = ctx.createImageData(pattern.cols, pattern.rows);
   const rgbs = pattern.palette.map((e) => e.rgb);
   for (let i = 0; i < pattern.indices.length; i++) {
-    const [r, g, b] = rgbs[pattern.indices[i]];
+    const idx = pattern.indices[i];
+    const [r, g, b] = idx === FABRIC ? [255, 255, 255] : rgbs[idx];
     img.data[i * 4] = r;
     img.data[i * 4 + 1] = g;
     img.data[i * 4 + 2] = b;

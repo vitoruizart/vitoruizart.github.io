@@ -1,13 +1,13 @@
 import { findFrame, findFabric, frameDims, stitchGrid } from './frames.js';
 import { cropRect } from './crop.js';
-import { resampleArea } from './resample.js';
+import { resampleArea, fabricMask } from './resample.js';
 import { buildPattern } from './quantize.js';
 import { bitmapPixels } from './image-io.js';
 
 // The photo's pixels and the per-stitch colours are the slow parts; both are
 // cached so moving the colour slider only re-runs the quantizer.
 let pixelsCache = { bitmap: null, pixels: null };
-let cellsCache = { key: null, cells: null };
+let cellsCache = { key: null, cells: null, fabric: null };
 let patternCache = { key: null, pattern: null };
 
 export function gridFor(state) {
@@ -46,16 +46,23 @@ export function computePattern(state) {
 
   if (pixelsCache.bitmap !== image.bitmap) {
     pixelsCache = { bitmap: image.bitmap, pixels: bitmapPixels(image.bitmap) };
-    cellsCache = { key: null, cells: null };
+    cellsCache = { key: null, cells: null, fabric: null };
     patternCache = { key: null, pattern: null };
   }
   const cellsKey = [cols, rows, rect.x, rect.y, rect.w, rect.h].join('|');
   if (cellsCache.key !== cellsKey) {
-    cellsCache = { key: cellsKey, cells: resampleArea(pixelsCache.pixels, rect, cols, rows) };
+    cellsCache = {
+      key: cellsKey,
+      cells: resampleArea(pixelsCache.pixels, rect, cols, rows),
+      fabric: fabricMask(image.w, image.h, rect, cols, rows)
+    };
   }
   const patternKey = cellsKey + '|' + state.maxColors;
   if (patternCache.key !== patternKey) {
-    patternCache = { key: patternKey, pattern: buildPattern(cellsCache.cells, cols, rows, state.maxColors) };
+    patternCache = {
+      key: patternKey,
+      pattern: buildPattern(cellsCache.cells, cols, rows, state.maxColors, { fabric: cellsCache.fabric })
+    };
   }
   return patternCache.pattern;
 }

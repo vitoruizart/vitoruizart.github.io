@@ -1,6 +1,7 @@
 import { textColorFor } from './color.js';
 import { axisLabels } from './layout.js';
 import { skeinsNeeded } from './skeins.js';
+import { FABRIC } from './constants.js';
 
 export const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
 const CENTER_MARK = '#c0392b';
@@ -24,7 +25,8 @@ export function drawChart(ctx, pattern, {
   const rEnd = Math.min(rows, Math.ceil((yMax - y) / cellPx));
 
   if (rEnd > rStart) {
-    // Cell fills, merging same-colour runs along each row.
+    // Cell fills, merging same-colour runs along each row. Bare fabric keeps
+    // the white background and gets no symbol.
     for (let r = rStart; r < rEnd; r++) {
       const base = (row0 + r) * pattern.cols + col0;
       let c = 0;
@@ -32,8 +34,10 @@ export function drawChart(ctx, pattern, {
         const idx = indices[base + c];
         let end = c + 1;
         while (end < cols && indices[base + end] === idx) end++;
-        ctx.fillStyle = palette[idx].hex;
-        ctx.fillRect(x + c * cellPx, y + r * cellPx, (end - c) * cellPx, cellPx);
+        if (idx !== FABRIC) {
+          ctx.fillStyle = palette[idx].hex;
+          ctx.fillRect(x + c * cellPx, y + r * cellPx, (end - c) * cellPx, cellPx);
+        }
         c = end;
       }
     }
@@ -48,6 +52,7 @@ export function drawChart(ctx, pattern, {
       const cy = y + r * cellPx + cellPx / 2 + cellPx * 0.03;
       for (let c = 0; c < cols; c++) {
         const idx = indices[base + c];
+        if (idx === FABRIC) continue;
         ctx.fillStyle = inks[idx];
         ctx.fillText(palette[idx].symbol, x + c * cellPx + cellPx / 2, cy);
       }

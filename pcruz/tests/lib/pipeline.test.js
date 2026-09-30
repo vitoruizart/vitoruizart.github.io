@@ -45,6 +45,11 @@ describe('patternSummary', () => {
     expect(patternSummary(big, meta).skeins).toBe(3);
   });
 
+  it('counts only stitched cells, not bare-fabric margin', () => {
+    const framed = { ...pattern, cols: 20, rows: 10 }; // 100 stitches + 100 fabric cells
+    expect(patternSummary(framed, meta).stitches).toBe(100);
+  });
+
   it('renders a one-line description', () => {
     expect(summaryLine(pattern, meta)).toBe('Marco 10 × 10 cm · Aida 14 (2 hebras) · 10 × 10 puntos · 2 colores DMC · 2 madejas');
   });

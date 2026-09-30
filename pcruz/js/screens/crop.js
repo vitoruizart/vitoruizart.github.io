@@ -1,9 +1,14 @@
 import { getState, setState, patchUi } from '../state.js';
-import { cropRect, normalizeCrop, defaultCrop, MAX_ZOOM } from '../lib/crop.js';
-import { attachGestures } from '../lib/gestures.js';
+import { cropRect, normalizeCrop, defaultCrop, fillCrop, resizeCrop, pickHandle, stageView } from '../lib/crop.js';
 import { gridFor, aspectFor, metaFor } from '../lib/pipeline.js';
 
-const PAD = 20;
+// Room left around image + frame so a corner can be dragged outwards. The
+// view re-fits after every drag, so the next drag can grow the frame further.
+const PAD_RATIO = 0.12;
+const HANDLE_RADIUS = 28; // touch target around each corner, CSS px
+const HANDLE_LEN = 20;
+const MIN_FRAME_PX = 64; // shortest on-screen frame side, keeps the corners apart
+const ACCENT = '#e2687a';
 
 export function mountCrop(root) {
   const s = getState();
@@ -22,14 +27,15 @@ export function mountCrop(root) {
       <div class="screen-header">
         <button class="back">‹ Marco</button>
         <h1>Encuadre</h1>
-        <button class="action" id="reset">Centrar</button>
+        <div class="spacer"></div>
       </div>
       <div class="crop-stage" id="stage"><canvas id="cv"></canvas></div>
       <div class="crop-controls">
         <div class="crop-info">${meta.frameLabel} cm · ${meta.fabricLabel} · ${cols} × ${rows} puntos</div>
-        <div class="slider-row">
-          <label for="zoom">Zoom</label>
-          <input type="range" id="zoom" min="1" max="${MAX_ZOOM}" step="0.01">
+        <p class="crop-hint">Arrastra las esquinas para ajustar el marco o su interior para moverlo. Lo que quede en blanco será tela sin bordar.</p>
+        <div class="crop-presets">
+          <button id="fit">Encajar</button>
+          <button id="fill">Rellenar</button>
         </div>
         <button class="primary" id="next">Crear patrón</button>
       </div>
@@ -38,25 +44,27 @@ export function mountCrop(root) {
 
   const stage = root.querySelector('#stage');
   const canvas = root.querySelector('#cv');
-  const zoomInput = root.querySelector('#zoom');
   const ctx = canvas.getContext('2d');
-  let crop = normalizeCrop(imgW, imgH, aspect, s.crop);
-  let win = null;
+  let crop = normalizeCrop(s.crop);
+  let view = null; // source px → stage CSS px
+  let drag = null;
 
   const commit = (next) => {
-    crop = normalizeCrop(imgW, imgH, aspect, next);
-    zoomInput.value = String(crop.zoom);
+    crop = normalizeCrop(next);
     setState({ crop });
     draw();
   };
 
-  function layoutWindow() {
-    const sw = stage.clientWidth - PAD * 2;
-    const sh = stage.clientHeight - PAD * 2;
-    let ww = sw;
-    let wh = sw / aspect;
-    if (wh > sh) { wh = sh; ww = sh * aspect; }
-    win = { x: (stage.clientWidth - ww) / 2, y: (stage.clientHeight - wh) / 2, w: ww, h: wh };
+  function fitView() {
+    const cw = stage.clientWidth;
+    const ch = stage.clientHeight;
+    const pad = Math.max(HANDLE_RADIUS, Math.min(cw, ch) * PAD_RATIO);
+    view = stageView(imgW, imgH, cropRect(imgW, imgH, aspect, crop), cw, ch, pad);
+  }
+
+  function frameOnScreen() {
+    const r = cropRect(imgW, imgH, aspect, crop);
+    return { x: view.x + r.x * view.s, y: view.y + r.y * view.s, w: r.w * view.s, h: r.h * view.s };
   }
 
   function draw() {
@@ -68,75 +76,129 @@ export function mountCrop(root) {
       canvas.width = Math.round(cw * dpr);
       canvas.height = Math.round(ch * dpr);
     }
-    layoutWindow();
-    const rect = cropRect(imgW, imgH, aspect, crop);
-    const scale = win.w / rect.w;
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.imageSmoothingQuality = 'high';
-    ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * (win.x - rect.x * scale), dpr * (win.y - rect.y * scale));
-    ctx.drawImage(bitmap, 0, 0);
+    if (!view) fitView();
+    const f = frameOnScreen();
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, cw, ch);
+    // Whatever the photo doesn't cover inside the frame is bare fabric.
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(f.x, f.y, f.w, f.h);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bitmap, view.x, view.y, imgW * view.s, imgH * view.s);
+
     ctx.fillStyle = 'rgba(0, 0, 0, 0.62)';
     ctx.beginPath();
     ctx.rect(0, 0, cw, ch);
-    ctx.rect(win.x, win.y, win.w, win.h);
+    ctx.rect(f.x, f.y, f.w, f.h);
     ctx.fill('evenodd');
 
     // Faint 10-stitch grid so the user sees how coarse the result will be.
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+    // Grey, so it shows on both the photo and the white fabric.
+    ctx.strokeStyle = 'rgba(128, 128, 128, 0.45)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (let c = 10; c < cols; c += 10) {
-      const x = Math.round(win.x + (c / cols) * win.w) + 0.5;
-      ctx.moveTo(x, win.y);
-      ctx.lineTo(x, win.y + win.h);
+      const x = Math.round(f.x + (c / cols) * f.w) + 0.5;
+      ctx.moveTo(x, f.y);
+      ctx.lineTo(x, f.y + f.h);
     }
     for (let r = 10; r < rows; r += 10) {
-      const y = Math.round(win.y + (r / rows) * win.h) + 0.5;
-      ctx.moveTo(win.x, y);
-      ctx.lineTo(win.x + win.w, y);
+      const y = Math.round(f.y + (r / rows) * f.h) + 0.5;
+      ctx.moveTo(f.x, y);
+      ctx.lineTo(f.x + f.w, y);
     }
     ctx.stroke();
-    ctx.strokeStyle = '#fff';
+
+    ctx.strokeStyle = ACCENT;
     ctx.lineWidth = 2;
-    ctx.strokeRect(win.x, win.y, win.w, win.h);
+    ctx.strokeRect(f.x, f.y, f.w, f.h);
+    // L-shaped corner handles, just outside the frame line.
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'square';
+    ctx.beginPath();
+    for (const sx of [-1, 1]) {
+      for (const sy of [-1, 1]) {
+        const x = (sx < 0 ? f.x : f.x + f.w) + sx * 2;
+        const y = (sy < 0 ? f.y : f.y + f.h) + sy * 2;
+        ctx.moveTo(x - sx * HANDLE_LEN, y);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x, y - sy * HANDLE_LEN);
+      }
+    }
+    ctx.stroke();
   }
 
-  const detach = attachGestures(stage, {
-    // Gesture deltas are relative to the gesture start, so keep that crop.
-    snapshot: () => {
-      const rect = cropRect(imgW, imgH, aspect, crop);
-      return { crop: { ...crop }, rect, scale: win ? win.w / rect.w : 1 };
-    },
-    onMove: (delta, base) => {
-      const { rect, scale } = base.snapshot;
-      const cx = rect.x + rect.w / 2 - delta.dx / scale;
-      const cy = rect.y + rect.h / 2 - delta.dy / scale;
-      commit({ cx: cx / imgW, cy: cy / imgH, zoom: base.snapshot.crop.zoom * delta.scale });
-    }
-  });
-
-  const onWheel = (e) => {
-    e.preventDefault();
-    commit({ ...crop, zoom: crop.zoom * Math.exp(-e.deltaY * 0.0015) });
+  const local = (e) => {
+    const r = stage.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
   };
-  stage.addEventListener('wheel', onWheel, { passive: false });
 
-  zoomInput.addEventListener('input', () => commit({ ...crop, zoom: Number(zoomInput.value) }));
-  root.querySelector('#reset').addEventListener('click', () => commit(defaultCrop()));
+  const onDown = (e) => {
+    if (drag || !view) return;
+    const pt = local(e);
+    const f = frameOnScreen();
+    const hit = pickHandle(f, pt, HANDLE_RADIUS);
+    if (!hit) return;
+    stage.setPointerCapture(e.pointerId);
+    // Where the grabbed corner sits relative to the finger, so it doesn't
+    // jump under the fingertip when the drag starts a few px off.
+    const offset = hit.type === 'corner'
+      ? { x: (hit.sx < 0 ? f.x : f.x + f.w) - pt.x, y: (hit.sy < 0 ? f.y : f.y + f.h) - pt.y }
+      : null;
+    drag = { id: e.pointerId, hit, start: pt, offset, crop };
+  };
+
+  const onMove = (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const pt = local(e);
+    if (drag.hit.type === 'move') {
+      commit({
+        ...drag.crop,
+        cx: drag.crop.cx + (pt.x - drag.start.x) / view.s / imgW,
+        cy: drag.crop.cy + (pt.y - drag.start.y) / view.s / imgH
+      });
+    } else {
+      const corner = {
+        x: (pt.x + drag.offset.x - view.x) / view.s,
+        y: (pt.y + drag.offset.y - view.y) / view.s
+      };
+      const minH = MIN_FRAME_PX / view.s / Math.min(1, aspect);
+      commit(resizeCrop(imgW, imgH, aspect, drag.crop, drag.hit, corner, minH));
+    }
+  };
+
+  const onUp = (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    drag = null;
+    try { stage.releasePointerCapture(e.pointerId); } catch (_) {}
+    fitView();
+    draw();
+  };
+
+  stage.addEventListener('pointerdown', onDown);
+  stage.addEventListener('pointermove', onMove);
+  stage.addEventListener('pointerup', onUp);
+  stage.addEventListener('pointercancel', onUp);
+
+  const preset = (next) => {
+    commit(next);
+    fitView();
+    draw();
+  };
+  root.querySelector('#fit').addEventListener('click', () => preset(defaultCrop()));
+  root.querySelector('#fill').addEventListener('click', () => preset(fillCrop(imgW, imgH, aspect)));
   root.querySelector('.back').addEventListener('click', () => patchUi({ screen: 'setup' }));
   root.querySelector('#next').addEventListener('click', () => patchUi({ screen: 'pattern' }));
 
-  const ro = new ResizeObserver(() => draw());
+  const ro = new ResizeObserver(() => {
+    if (!stage.clientWidth || !stage.clientHeight) return;
+    fitView();
+    draw();
+  });
   ro.observe(stage);
-  root._cleanup = () => {
-    detach();
-    ro.disconnect();
-  };
+  root._cleanup = () => ro.disconnect();
 
   commit(crop);
 }

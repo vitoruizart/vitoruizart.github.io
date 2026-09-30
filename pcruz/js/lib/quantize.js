@@ -1,6 +1,7 @@
 import { DMC_COLORS } from './dmc.js';
 import { rgbToLab, deltaE2000 } from './color.js';
 import { SYMBOLS } from './symbols.js';
+import { FABRIC } from './constants.js';
 
 // k-means trains on at most this many cells; every cell is still mapped.
 const MAX_SAMPLES = 20000;
@@ -19,17 +20,21 @@ let dmcLabs = null;
  *      away (see mergeThreads).
  *   4. Every stitch takes the closest of the surviving threads.
  *
- * cells: Uint8Array RGB, cols*rows*3.
+ * cells:  Uint8Array RGB, cols*rows*3.
+ * fabric: optional Uint8Array(cols*rows), 1 = bare fabric (not stitched,
+ *         ignored when picking colours, index FABRIC).
  * Returns { cols, rows, palette: [{ code, name, hex, rgb, symbol, count }],
- *           indices: Uint16Array(cols*rows) into palette }.
+ *           indices: Uint16Array(cols*rows) into palette, or FABRIC }.
  * Palette is sorted by stitch count (most used first).
  */
-export function buildPattern(cells, cols, rows, maxColors, { seed = 1 } = {}) {
+export function buildPattern(cells, cols, rows, maxColors, { seed = 1, fabric = null } = {}) {
   const n = cols * rows;
   const labCache = new Map();
   const labs = new Float64Array(n * 3);
+  // RGB packed into 24 bits, or -1 for a fabric cell.
   const keys = new Int32Array(n);
   for (let i = 0; i < n; i++) {
+    if (fabric && fabric[i]) { keys[i] = -1; continue; }
     const key = (cells[i * 3] << 16) | (cells[i * 3 + 1] << 8) | cells[i * 3 + 2];
     keys[i] = key;
     let lab = labCache.get(key);
@@ -44,7 +49,7 @@ export function buildPattern(cells, cols, rows, maxColors, { seed = 1 } = {}) {
 
   const centroids = labCache.size <= maxColors
     ? Array.from(labCache.values())
-    : kMeans(samplePoints(labs, n), Math.min(maxColors * 2, labCache.size), seed);
+    : kMeans(samplePoints(labs, keys), Math.min(maxColors * 2, labCache.size), seed);
 
   let threads = [...new Set(centroids.map(nearestDmc))];
   let { raw, counts } = assignCells(threads, keys, labs);
@@ -65,7 +70,7 @@ export function buildPattern(cells, cols, rows, maxColors, { seed = 1 } = {}) {
     return { code: dmc.code, name: dmc.name, hex: dmc.hex, rgb: dmc.rgb, symbol: SYMBOLS[newIdx], count: counts[oldIdx] };
   });
   const indices = new Uint16Array(n);
-  for (let i = 0; i < n; i++) indices[i] = remap[raw[i]];
+  for (let i = 0; i < n; i++) indices[i] = raw[i] === FABRIC ? FABRIC : remap[raw[i]];
 
   return { cols, rows, palette, indices };
 }
@@ -77,6 +82,7 @@ function assignCells(threads, keys, labs) {
   const raw = new Uint16Array(keys.length);
   const counts = new Array(threads.length).fill(0);
   for (let i = 0; i < keys.length; i++) {
+    if (keys[i] < 0) { raw[i] = FABRIC; continue; }
     let t = cache.get(keys[i]);
     if (t === undefined) {
       t = nearestIndex(labs[i * 3], labs[i * 3 + 1], labs[i * 3 + 2], threadLabs);
@@ -149,10 +155,16 @@ function nearestIndex(L, a, b, list) {
   return best;
 }
 
-function samplePoints(labs, n) {
-  const step = Math.max(1, Math.floor(n / MAX_SAMPLES));
+// Every step-th stitched cell, so a mostly-fabric grid still yields samples.
+function samplePoints(labs, keys) {
+  let stitched = 0;
+  for (const k of keys) if (k >= 0) stitched++;
+  const step = Math.max(1, Math.floor(stitched / MAX_SAMPLES));
   const points = [];
-  for (let i = 0; i < n; i += step) points.push([labs[i * 3], labs[i * 3 + 1], labs[i * 3 + 2]]);
+  for (let i = 0, j = 0; i < keys.length; i++) {
+    if (keys[i] < 0) continue;
+    if (j++ % step === 0) points.push([labs[i * 3], labs[i * 3 + 1], labs[i * 3 + 2]]);
+  }
   return points;
 }
 

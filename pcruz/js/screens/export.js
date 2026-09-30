@@ -15,7 +15,7 @@ export function mountExport(root) {
   root.innerHTML = `
     <div class="screen">
       <div class="screen-header">
-        <button class="back">‹ Patrón</button>
+        <button class="back">‹ Vista previa</button>
         <h1>Descargar</h1>
         <div class="spacer"></div>
       </div>
@@ -48,7 +48,7 @@ export function mountExport(root) {
   let alive = true;
   const check = () => { if (!alive) throw new Cancelled(); };
 
-  root.querySelector('.back').addEventListener('click', () => patchUi({ screen: 'pattern' }));
+  root.querySelector('.back').addEventListener('click', () => patchUi({ screen: 'preview' }));
   root._cleanup = () => {
     alive = false;
     for (const u of urls) URL.revokeObjectURL(u);

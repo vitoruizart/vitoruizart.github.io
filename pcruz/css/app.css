@@ -185,14 +185,16 @@ input[type="range"] {
 .frame-card .frame-sub { font-size: 11px; color: var(--text-muted); }
 
 /* Crop */
-.crop-stage {
+.crop-stage,
+.viewer-stage {
   position: relative;
   flex: 1;
   overflow: hidden;
   background: #000;
   touch-action: none;
 }
-.crop-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.crop-stage canvas,
+.viewer-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .crop-controls {
   padding: 12px 16px calc(12px + var(--safe-bottom));
   background: var(--bg-elev);
@@ -201,7 +203,11 @@ input[type="range"] {
   flex-direction: column;
   gap: 8px;
 }
-.crop-info { font-size: 13px; color: var(--text-muted); text-align: center; }
+.crop-info,
+.viewer-hint { font-size: 13px; color: var(--text-muted); text-align: center; }
+.crop-hint { margin: 0; font-size: 12px; line-height: 1.35; color: var(--text-muted); text-align: center; }
+.crop-presets { display: flex; gap: 8px; }
+.crop-presets button { flex: 1; }
 
 .slider-row {
   display: flex;
@@ -226,6 +232,7 @@ input[type="range"] {
 }
 .preview-wrap canvas {
   display: block;
+  cursor: pointer;
   max-width: 100%;
   image-rendering: pixelated;
   background: #fff;

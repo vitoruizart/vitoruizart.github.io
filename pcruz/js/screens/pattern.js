@@ -35,7 +35,7 @@ export function mountPattern(root) {
         <div class="legend-list" id="legend"></div>
       </div>
       <div class="screen-footer">
-        <button class="primary" id="export" disabled>Descargar patrón (PNG y PDF)</button>
+        <button class="primary" id="export" disabled>Ver patrón y descargar</button>
       </div>
     </div>
   `;
@@ -108,7 +108,10 @@ export function mountPattern(root) {
     }, 250);
   });
   root.querySelector('.back').addEventListener('click', () => patchUi({ screen: 'crop' }));
-  exportBtn.addEventListener('click', () => patchUi({ screen: 'export' }));
+  exportBtn.addEventListener('click', () => patchUi({ screen: 'preview' }));
+  preview.addEventListener('click', () => {
+    if (!exportBtn.disabled) patchUi({ screen: 'preview' });
+  });
   root.querySelector('#new').addEventListener('click', async () => {
     if (!confirm('¿Descartar este patrón y empezar con otra imagen?')) return;
     await clearDraft();

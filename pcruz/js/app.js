@@ -3,6 +3,7 @@ import { mountPickImage } from './screens/pick-image.js';
 import { mountSetup } from './screens/setup.js';
 import { mountCrop } from './screens/crop.js';
 import { mountPattern } from './screens/pattern.js';
+import { mountPreview } from './screens/preview.js';
 import { mountExport } from './screens/export.js';
 import { loadDraft, scheduleDraftSave, clearDraft, sanitizeSettings, isRestorableDraft } from './lib/drafts.js';
 import { loadBitmap, downscaleBitmap, naturalSize } from './lib/image-io.js';
@@ -18,6 +19,7 @@ const screens = {
   'setup': mountSetup,
   'crop': mountCrop,
   'pattern': mountPattern,
+  'preview': mountPreview,
   'export': mountExport
 };
 

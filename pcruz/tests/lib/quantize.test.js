@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildPattern } from '../../js/lib/quantize.js';
 import { DMC_COLORS } from '../../js/lib/dmc.js';
 import { SYMBOLS } from '../../js/lib/symbols.js';
+import { FABRIC } from '../../js/lib/constants.js';
 
 const byCode = (code) => DMC_COLORS.find((c) => c.code === code);
 
@@ -131,5 +132,40 @@ describe('buildPattern', () => {
     const p = buildPattern(cells, 20, 10, 2);
     expect(p.palette).toHaveLength(2);
     expect(p.indices[0]).not.toBe(p.indices[19]);
+  });
+
+  it('leaves fabric cells unstitched and out of the palette and counts', () => {
+    // 10×10 black square inside a 14×14 frame: a 2-cell fabric margin all round.
+    const cols = 14, rows = 14;
+    const fabric = new Uint8Array(cols * rows);
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        if (x < 2 || x >= 12 || y < 2 || y >= 12) fabric[y * cols + x] = 1;
+      }
+    }
+    // Fabric cells hold a colour that must not leak into the palette.
+    const cells = cellsFrom(cols, rows, (x, y) => (fabric[y * cols + x] ? [255, 0, 0] : byCode('310').rgb));
+    const p = buildPattern(cells, cols, rows, 5, { fabric });
+    expect(p.palette.map((e) => e.code)).toEqual(['310']);
+    expect(p.palette[0].count).toBe(100);
+    for (let i = 0; i < cols * rows; i++) {
+      expect(p.indices[i]).toBe(fabric[i] ? FABRIC : 0);
+    }
+  });
+
+  it('samples only image cells when the grid is large and mostly fabric', () => {
+    const cols = 300, rows = 200;
+    const fabric = new Uint8Array(cols * rows).fill(1);
+    fabric[100 * cols + 150] = 0; // a single stitch of image
+    const cells = gradientCells(cols, rows);
+    const p = buildPattern(cells, cols, rows, 10, { fabric });
+    expect(p.palette).toHaveLength(1);
+    expect(p.palette[0].count).toBe(1);
+  });
+
+  it('returns an empty palette when every cell is fabric', () => {
+    const p = buildPattern(gradientCells(5, 5), 5, 5, 10, { fabric: new Uint8Array(25).fill(1) });
+    expect(p.palette).toEqual([]);
+    expect(Array.from(p.indices).every((i) => i === FABRIC)).toBe(true);
   });
 });

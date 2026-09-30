@@ -10,6 +10,10 @@ export const CACHE_PREFIX = 'pcruz-';
 export const MAX_IMAGE_DIM = 2560;
 export const MAX_FILE_BYTES = 50 * 1024 * 1024;
 
+// Pattern index of a cell left as bare fabric: the white margin between the
+// photo and the frame. It has no palette entry, symbol or stitches.
+export const FABRIC = 0xffff;
+
 export const MIN_COLORS = 2;
 export const MAX_COLORS = 60;
 export const DEFAULT_COLORS = 20;
@@ -23,4 +27,4 @@ export const MAX_CELL_PX = 32;
 // Bump this in lockstep with version.json on every deploy. Installed PWAs
 // compare it against the server's version.json to decide whether to show the
 // blocking update modal.
-export const APP_VERSION = '0.1.0';
+export const APP_VERSION = '0.2.0';

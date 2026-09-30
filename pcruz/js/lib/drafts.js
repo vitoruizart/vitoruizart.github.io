@@ -1,6 +1,6 @@
 import { put, get, del } from '../db.js';
 import { findFrame, findFabric } from './frames.js';
-import { MAX_ZOOM } from './crop.js';
+import { MIN_ZOOM, MAX_ZOOM } from './crop.js';
 import { MIN_COLORS, MAX_COLORS, MAX_FILE_BYTES } from './constants.js';
 import { defaultSettings } from '../state.js';
 
@@ -66,7 +66,7 @@ export function sanitizeSettings(raw) {
     crop: {
       cx: clampNum(crop.cx, 0, 1, d.crop.cx),
       cy: clampNum(crop.cy, 0, 1, d.crop.cy),
-      zoom: clampNum(crop.zoom, 1, MAX_ZOOM, d.crop.zoom)
+      zoom: clampNum(crop.zoom, MIN_ZOOM, MAX_ZOOM, d.crop.zoom)
     },
     maxColors: Math.round(clampNum(src.maxColors, MIN_COLORS, MAX_COLORS, d.maxColors))
   };

@@ -4,7 +4,7 @@ import { saveDraft, loadDraft, clearDraft, sanitizeSettings, isRestorableDraft }
 import { _resetForTests } from '../../js/db.js';
 import { defaultSettings } from '../../js/state.js';
 import { MAX_COLORS, MIN_COLORS, MAX_FILE_BYTES } from '../../js/lib/constants.js';
-import { MAX_ZOOM } from '../../js/lib/crop.js';
+import { MIN_ZOOM, MAX_ZOOM } from '../../js/lib/crop.js';
 
 beforeEach(async () => {
   await _resetForTests();
@@ -41,6 +41,8 @@ describe('sanitizeSettings', () => {
   it('clamps numeric ranges', () => {
     const s = sanitizeSettings({ crop: { cx: -5, cy: 9, zoom: 100 }, maxColors: 999.7 });
     expect(s.crop).toEqual({ cx: 0, cy: 1, zoom: MAX_ZOOM });
+    expect(sanitizeSettings({ crop: { cx: 0.5, cy: 0.5, zoom: 0 } }).crop.zoom).toBe(MIN_ZOOM);
+    expect(sanitizeSettings({ crop: { cx: 0.5, cy: 0.5, zoom: 0.6 } }).crop.zoom).toBe(0.6);
     expect(s.maxColors).toBe(MAX_COLORS);
     expect(sanitizeSettings({ maxColors: 0 }).maxColors).toBe(MIN_COLORS);
     expect(sanitizeSettings({ maxColors: 12.6 }).maxColors).toBe(13);

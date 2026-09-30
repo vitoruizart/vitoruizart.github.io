@@ -7,7 +7,9 @@
  * src:  { width, height, data: RGBA bytes } (an ImageData or look-alike)
  * rect: { x, y, w, h } in source pixels
  * Returns Uint8Array of outW*outH*3 RGB bytes. Transparency is composited
- * over white, i.e. treated as unstitched fabric.
+ * over white. The rect may extend past the image: a cell that straddles the
+ * edge averages only the pixels it covers, and a cell wholly outside takes
+ * the nearest pixel (fabricMask marks those cells as unstitched anyway).
  */
 export function resampleArea(src, rect, outW, outH) {
   const xSpans = spans(rect.x, rect.w, outW, src.width);
@@ -42,6 +44,23 @@ export function resampleArea(src, rect, outW, outH) {
   return out;
 }
 
+/**
+ * 1 for every cell whose centre falls outside the image: the frame extends
+ * past the photo there and the stitcher leaves bare fabric. Deciding by the
+ * centre keeps the photo's edge crisp instead of a row of half-blended cells.
+ */
+export function fabricMask(imgW, imgH, rect, outW, outH) {
+  const mask = new Uint8Array(outW * outH);
+  for (let cy = 0; cy < outH; cy++) {
+    const y = rect.y + ((cy + 0.5) * rect.h) / outH;
+    for (let cx = 0; cx < outW; cx++) {
+      const x = rect.x + ((cx + 0.5) * rect.w) / outW;
+      if (x < 0 || x >= imgW || y < 0 || y >= imgH) mask[cy * outW + cx] = 1;
+    }
+  }
+  return mask;
+}
+
 // For each output cell along one axis: flat [pixelIndex, weight, ...] list
 // of the source pixels it overlaps.
 function spans(start, length, count, limit) {
@@ -57,8 +76,8 @@ function spans(start, length, count, limit) {
       const w = Math.min(b, p + 1) - Math.max(a, p);
       if (w > 1e-9) list.push(p, w);
     }
-    // Rect edge exactly on the image border can leave a cell empty through
-    // float noise; fall back to the nearest pixel.
+    // Cell outside the image (or on its border through float noise): fall
+    // back to the nearest pixel.
     if (list.length === 0) list.push(Math.min(limit - 1, Math.max(0, Math.floor(a))), 1);
     result[c] = list;
   }
